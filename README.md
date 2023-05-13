@@ -1,7 +1,7 @@
 # UtlApp
 
 <a name="top"></a>
-![MIT License](LICENCE)
+[MIT License](LICENCE)
 
 <a name="overview"></a>
 
