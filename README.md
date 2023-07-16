@@ -73,7 +73,7 @@ In order to use this library, please install the library as follows.
 | Methods                                                   | Description                                      |
 | :-------------------------------------------------------- | :----------------------------------------------- |
 | [convInt8ArrayToHexAr](#convint8arraytohexar)             | Convert Int8Array to hex string array.           |
-| [convStrToHex](#convStrToHex)                             | Convert string to hex.                           |
+| [convStrToHex](#convstrtohex)                             | Convert string to hex.                           |
 | [convHexToInt8Ar](#convhextoint8ar)                       | Convert string to hex.                           |
 | [convInt8ArToStr](#convint8artostr)                       | Convert Int8Array to string value.               |
 | [convInt8ArToUint8Ar](#convint8artouint8ar)               | Convert Int8Array to Uint8Array.                 |
