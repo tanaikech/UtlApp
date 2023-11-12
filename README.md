@@ -1352,7 +1352,7 @@ function convA1NotationToGridRange(a1Notation = null, sheetId = null) {
     startRowIndex: start?.row && start.row - 1,
     endRowIndex: end?.row ? end.row : start.row,
     startColumnIndex: start && start.col,
-    endColumnIndex: end ? end.col + 1 : 1,
+    endColumnIndex: end ? end.col + 1 : start.col + 1,
   };
   if (obj.startRowIndex === null) {
     obj.startRowIndex = 0;
@@ -1718,5 +1718,9 @@ I believe that these methods will help to develop the applications created by Go
 - v1.0.0 (May 13, 2023)
 
   1. Initial release.
+
+- v1.0.1 (November 12, 2023)
+
+  1. From [this report](https://github.com/tanaikech/UtlApp/issues/1) by [Max-Makhrov](https://github.com/Max-Makhrov), a bug of `convA1NotationToGridRange` was removed.
 
 [TOP](#top)

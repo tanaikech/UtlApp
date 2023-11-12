@@ -186,7 +186,7 @@ function convA1NotationToGridRange(a1Notation = null, sheetId = null) {
     startRowIndex: start?.row && start.row - 1,
     endRowIndex: end?.row ? end.row : start.row,
     startColumnIndex: start && start.col,
-    endColumnIndex: end ? end.col + 1 : 1,
+    endColumnIndex: end ? end.col + 1 : start.col + 1,
   };
   if (obj.startRowIndex === null) {
     obj.startRowIndex = 0;
