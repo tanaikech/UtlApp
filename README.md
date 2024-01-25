@@ -835,7 +835,7 @@ function dotProduct(array1, array2) {
 
 ### cosineSimilarity
 
-Calculate cosine similarity from 2 arrays.
+Calculate cosine similarity from 2 arrays. This can be used with "[Semantic Search using Gemini Pro API with Google Apps Script](https://medium.com/google-cloud/semantic-search-using-gemini-pro-api-with-google-apps-script-5e511e26eaf0)" of my report.
 
 ```javascript
 /**
