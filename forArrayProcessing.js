@@ -522,3 +522,49 @@ function reverseUnpivot(values) {
   const temp = [[null, ...rh], ...[...Array(Math.ceil(c.length / size))].map(_ => c.splice(0, size)).map((vv, i) => [ch[i], ...vv])];
   return temp[0].map((_, c) => temp.map(r => r[c]));
 }
+
+/**
+ * ### Description
+ * Calculate dot product from 2 arrays.
+ *
+ * ### Sample script
+ * ```
+ * const array1 = [1, 2, 3, 4, 5];
+ * const array2 = [3, 4, 5, 6, 7];
+ * const res = UtlApp.dotProduct(array1, array2);
+ * ```
+ *
+ * @param {Array} array1 1-dimensional array including numbers.
+ * @param {Array} array2 1-dimensional array including numbers.
+ * @return {Number} Calculated result of dot product.
+ */
+function dotProduct(array1, array2) {
+  if (!Array.isArray(array1) || !Array.isArray(array2)) {
+    throw new Error("Please give 2 arrays.");
+  }
+  return array1.reduce((t, e, i) => t += e * array2[i], 0);
+}
+
+/**
+ * ### Description
+ * Calculate cosine similarity from 2 arrays.
+ *
+ * ### Sample script
+ * ```
+ * const array1 = [1, 2, 3, 4, 5];
+ * const array2 = [3, 4, 5, 6, 7];
+ * const res = UtlApp.cosineSimilarity(array1, array2);
+ * ```
+ *
+ * @param {Array} array1 1-dimensional array including numbers.
+ * @param {Array} array2 1-dimensional array including numbers.
+ * @return {Number} Calculated result of cosine similarity.
+ */
+function cosineSimilarity(array1, array2) {
+  if (!Array.isArray(array1) || !Array.isArray(array2)) {
+    throw new Error("Please give 2 arrays.");
+  }
+  const dotProduct = array1.reduce((t, e, i) => t += e * array2[i], 0);
+  const magnitudes = [array1, array2].map(e => Math.sqrt(e.reduce((t, f) => t += f * f, 0))).reduce((t, f) => t *= f, 1);
+  return dotProduct / magnitudes;
+}

@@ -67,6 +67,8 @@ In order to use this library, please install the library as follows.
 | [convArrayToObject](#convarraytoobject)           | Converting 2 dimensional array to JSON object.                                  |
 | [unpivot](#unpivot)                               | Converting 2-dimensional array as unpivot (reverse pivot).                      |
 | [reverseUnpivot](#reverseunpivot)                 | Reversing 2-dimensional array with unpivot.                                     |
+| [dotProduct](#dotproduct)                 | Calculate dot product from 2 arrays.                                     |
+| [cosineSimilarity](#cosinesimilarity)                 | Calculate cosine similarity from 2 arrays.                                     |
 
 ## For binary processing
 
@@ -798,6 +800,68 @@ function reverseUnpivot(values) {
   return temp[0].map((_, c) => temp.map((r) => r[c]));
 }
 ````
+
+<a name="dotproduct"></a>
+
+### dotProduct
+
+Calculate dot product from 2 arrays.
+
+```javascript
+/**
+ * ### Description
+ * Calculate dot product from 2 arrays.
+ *
+ * ### Sample script
+ * ```
+ * const array1 = [1, 2, 3, 4, 5];
+ * const array2 = [3, 4, 5, 6, 7];
+ * const res = UtlApp.dotProduct(array1, array2);
+ * ```
+ *
+ * @param {Array} array1 1-dimensional array including numbers.
+ * @param {Array} array2 1-dimensional array including numbers.
+ * @return {Number} Calculated result of dot product.
+ */
+function dotProduct(array1, array2) {
+  if (!Array.isArray(array1) || !Array.isArray(array2)) {
+    throw new Error("Please give 2 arrays.");
+  }
+  return array1.reduce((t, e, i) => t += e * array2[i], 0);
+}
+```
+
+<a name="cosinesimilarity"></a>
+
+### cosineSimilarity
+
+Calculate cosine similarity from 2 arrays.
+
+```javascript
+/**
+ * ### Description
+ * Calculate cosine similarity from 2 arrays.
+ *
+ * ### Sample script
+ * ```
+ * const array1 = [1, 2, 3, 4, 5];
+ * const array2 = [3, 4, 5, 6, 7];
+ * const res = UtlApp.cosineSimilarity(array1, array2);
+ * ```
+ *
+ * @param {Array} array1 1-dimensional array including numbers.
+ * @param {Array} array2 1-dimensional array including numbers.
+ * @return {Number} Calculated result of cosine similarity.
+ */
+function cosineSimilarity(array1, array2) {
+  if (!Array.isArray(array1) || !Array.isArray(array2)) {
+    throw new Error("Please give 2 arrays.");
+  }
+  const dotProduct = array1.reduce((t, e, i) => t += e * array2[i], 0);
+  const magnitudes = [array1, array2].map(e => Math.sqrt(e.reduce((t, f) => t += f * f, 0))).reduce((t, f) => t *= f, 1);
+  return dotProduct / magnitudes;
+}
+```
 
 ---
 
@@ -1722,5 +1786,9 @@ I believe that these methods will help to develop the applications created by Go
 - v1.0.1 (November 12, 2023)
 
   1. From [this report](https://github.com/tanaikech/UtlApp/issues/1) by [Max-Makhrov](https://github.com/Max-Makhrov), a bug of `convA1NotationToGridRange` was removed.
+
+- v1.0.2 (January 25, 2024)
+
+  1. 2 methods of [dotProduct](#dotproduct) and [cosineSimilarity](#cosinesimilarity) were added.
 
 [TOP](#top)
