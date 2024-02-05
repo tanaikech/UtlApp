@@ -1507,8 +1507,8 @@ This method is used for adding the query parameters to the URL. [Ref](https://ta
  * ### Description
  * This method is used for adding the query parameters to the URL.
  * Ref: https://tanaikech.github.io/2018/07/12/adding-query-parameters-to-url-using-google-apps-script/
- *
- * ### Sample script
+ * 
+ * ### Sample script 1
  * ```
  * const url = "https://sampleUrl";
  * const query = {
@@ -1519,30 +1519,32 @@ This method is used for adding the query parameters to the URL. [Ref](https://ta
  * const endpoint = UtlApp.addQueryParameters(url, query);
  * console.log(endpoint); // https://sampleUrl?query1=value1A&query1=value1B&query1=value1C&query2=value2A%2C%20value2B&query3=value3A%2Fvalue3B
  * ```
- *
+ * 
+ * ### Sample script 2
+ * ```
+ * const url = "";
+ * const query = {
+ *   query1: ["value1A", "value1B", "value1C"],
+ *   query2: "value2A, value2B",
+ *   query3: "value3A/value3B",
+ * };
+ * const endpoint = UtlApp.addQueryParameters(url, query);
+ * console.log(endpoint); // query1=value1A&query1=value1B&query1=value1C&query2=value2A%2C%20value2B&query3=value3A%2Fvalue3B
+ * ```
+ * 
  * @param {String} url The base URL for adding the query parameters.
  * @param {Object} obj JSON object including query parameters.
  * @return {String} URL including the query parameters.
  */
 function addQueryParameters(url, obj) {
   if (url === null || obj === null || typeof url != "string") {
-    throw new Error(
-      "Please give URL (String) and query parameter (JSON object)."
-    );
+    throw new Error("Please give URL (String) and query parameter (JSON object).");
   }
-  return (
-    url +
-    "?" +
-    Object.entries(obj)
-      .flatMap(([k, v]) =>
-        Array.isArray(v)
-          ? v.map((e) => `${k}=${encodeURIComponent(e)}`)
-          : `${k}=${encodeURIComponent(v)}`
-      )
-      .join("&")
-  );
+  return (url == "" ? "" : `${url}?`) + Object.entries(obj).flatMap(([k, v]) => Array.isArray(v) ? v.map(e => `${k}=${encodeURIComponent(e)}`) : `${k}=${encodeURIComponent(v)}`).join("&");
 }
 ````
+
+- In this case, when you use `""` as `url`, only the query parameters are returned.
 
 <a name="parsequeryparameters"></a>
 
@@ -1790,5 +1792,9 @@ I believe that these methods will help to develop the applications created by Go
 - v1.0.2 (January 25, 2024)
 
   1. 2 methods of [dotProduct](#dotproduct) and [cosineSimilarity](#cosinesimilarity) were added.
+
+- v1.0.3 (February 5, 2024)
+
+  1. Methods of [addQueryParameters](#addqueryparameters) was updated.
 
 [TOP](#top)
