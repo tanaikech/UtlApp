@@ -1441,8 +1441,8 @@ Converting gridrange to a1Notation. This will be useful for using Sheets API. [R
  * ### Description
  * Converting gridrange to a1Notation. This will be useful for using Sheets API.
  * Ref: https://tanaikech.github.io/2017/07/31/converting-a1notation-to-gridrange-for-google-sheets-api/
- *
- * ### Sample script
+ * 
+ * ### Sample script 1
  * ```
  * const gridRange = {
  *   sheetId: 0,
@@ -1455,12 +1455,28 @@ Converting gridrange to a1Notation. This will be useful for using Sheets API. [R
  * const res = UtlApp.convGridRangeToA1Notation(gridRange, sheetName);
  * console.log(res); // 'Sheet1'!AB25:AD51
  * ```
- *
+ * 
+ * ### Sample script 2
+ * ```
+ * const gridRange = {
+ *   sheetId: 0,
+ *   startRowIndex: 24,
+ *   endRowIndex: 51,
+ *   startColumnIndex: 27,
+ *   endColumnIndex: 30
+ * };
+ * const res = UtlApp.convGridRangeToA1Notation(gridRange);
+ * console.log(res); // AB25:AD51
+ * ```
+ * 
  * @param {Object} gridrange Gridrange of range.
  * @param {String} sheetName Sheet name of the range.
  * @return {String} A1Notation.
  */
-function convGridRangeToA1Notation(gridrange, sheetName) {
+function convGridRangeToA1Notation(gridrange, sheetName = "") {
+  if (gridrange === null) {
+    throw new Error("Please give gridRange (JSON object).");
+  }
   const start = {};
   const end = {};
   if (gridrange.hasOwnProperty("startColumnIndex")) {
@@ -1490,9 +1506,10 @@ function convGridRangeToA1Notation(gridrange, sheetName) {
   const k = ["col", "row"];
   const st = k.map((e) => start[e]).join("");
   const en = k.map((e) => end[e]).join("");
-  const a1Notation =
-    st == en ? `'${sheetName}'!${st}` : `'${sheetName}'!${st}:${en}`;
-  return a1Notation;
+  if (sheetName) {
+    return st == en ? `'${sheetName}'!${st}` : `'${sheetName}'!${st}:${en}`;
+  }
+  return st == en ? `${st}` : `${st}:${en}`;
 }
 ````
 
@@ -1796,5 +1813,9 @@ I believe that these methods will help to develop the applications created by Go
 - v1.0.3 (February 5, 2024)
 
   1. Methods of [addQueryParameters](#addqueryparameters) was updated.
+
+- v1.0.4 (April 13, 2024)
+
+  1. Updated the methods of [convGridRangeToA1Notation](#convgridrangetoa1Notation). When the sheet name is not given, only the A1Notation is returned.
 
 [TOP](#top)

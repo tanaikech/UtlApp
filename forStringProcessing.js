@@ -204,7 +204,7 @@ function convA1NotationToGridRange(a1Notation = null, sheetId = null) {
  * Converting gridrange to a1Notation. This will be useful for using Sheets API.
  * Ref: https://tanaikech.github.io/2017/07/31/converting-a1notation-to-gridrange-for-google-sheets-api/
  * 
- * ### Sample script
+ * ### Sample script 1
  * ```
  * const gridRange = {
  *   sheetId: 0,
@@ -218,13 +218,26 @@ function convA1NotationToGridRange(a1Notation = null, sheetId = null) {
  * console.log(res); // 'Sheet1'!AB25:AD51
  * ```
  * 
+ * ### Sample script 2
+ * ```
+ * const gridRange = {
+ *   sheetId: 0,
+ *   startRowIndex: 24,
+ *   endRowIndex: 51,
+ *   startColumnIndex: 27,
+ *   endColumnIndex: 30
+ * };
+ * const res = UtlApp.convGridRangeToA1Notation(gridRange);
+ * console.log(res); // AB25:AD51
+ * ```
+ * 
  * @param {Object} gridrange Gridrange of range.
  * @param {String} sheetName Sheet name of the range.
  * @return {String} A1Notation.
  */
-function convGridRangeToA1Notation(gridrange, sheetName) {
-  if (gridrange === null || sheetName === null || typeof sheetName != "string") {
-    throw new Error("Please give gridRange (JSON object) and sheet name (String).");
+function convGridRangeToA1Notation(gridrange, sheetName = "") {
+  if (gridrange === null) {
+    throw new Error("Please give gridRange (JSON object).");
   }
   const start = {};
   const end = {};
@@ -255,8 +268,10 @@ function convGridRangeToA1Notation(gridrange, sheetName) {
   const k = ["col", "row"];
   const st = k.map((e) => start[e]).join("");
   const en = k.map((e) => end[e]).join("");
-  const a1Notation = st == en ? `'${sheetName}'!${st}` : `'${sheetName}'!${st}:${en}`;
-  return a1Notation;
+  if (sheetName) {
+    return st == en ? `'${sheetName}'!${st}` : `'${sheetName}'!${st}:${en}`;
+  }
+  return st == en ? `${st}` : `${st}:${en}`;
 }
 
 /**
