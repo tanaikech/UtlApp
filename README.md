@@ -1736,6 +1736,8 @@ function expandA1Notations(a1Notations, maxRow = "1000", maxColumn = "Z") {
 
 This method is used for consolidating the scattered A1Notations.
 
+You can see my report using this method at [https://medium.com/@tanaike/consolidate-scattered-a1notations-into-continuous-ranges-on-google-spreadsheet-using-google-apps-c9ce870dcb99](https://medium.com/@tanaike/consolidate-scattered-a1notations-into-continuous-ranges-on-google-spreadsheet-using-google-apps-c9ce870dcb99).
+
 ````javascript
 /**
  * ### Description
