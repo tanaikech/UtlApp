@@ -442,3 +442,198 @@ function expandA1Notations(a1Notations, maxRow = "1000", maxColumn = "Z") {
     return temp;
   });
 }
+
+/**
+ * ### Description
+ * This method is used for consolidating the scattered A1Notations.
+ * 
+ * ### Sample script
+ * ```
+ * const a1Notations = ["C1", "I1", "B2", "C2", "D2", "E2", "F2", "H2", "I2", "C3", "D3", "F3", "H3", "I3", "C4", "D4", "E4", "H4", "K4", "C5", "E5", "F5", "I5", "J5", "K5", "F6", "I6", "K6", "D7", "E7", "I7", "J7", "K7", "D8", "I8", "J8", "D9", "J9", "K9", "D10"];
+ * const res = UtlApp.consolidateA1Notations(a1Notations);
+ * console.log(JSON.stringify(res));
+ * ```
+ * 
+ * Result is as follows.
+ * 
+ * ```
+ * ["C1:C5","K4:K7","I5:I8","D7:D10","I1:I3","D2:F2","H2:H4","J7:J9","D3:D4","E4:E5","F5:F6","B2","F3","J5","E7","K9"]
+ * ```
+ * 
+ * @param {Array} a1Notations Scattered A1Notations.
+ * @return {Array} Array including the consolidated A1Notations.
+ */
+function consolidateA1Notations(array) {
+  return new ConsolidateA1Notations(array).run();
+}
+
+/**
+ * Consolidate Scattered A1Notations into Continuous Ranges on Google Spreadsheet.
+ */
+class ConsolidateA1Notations {
+  /**
+   *
+   * @param {Array} a1Notations Scattered A1Notations.
+   */
+  constructor(a1Notations) {
+    this.a1Notations = a1Notations;
+  }
+
+  /**
+   * ### Description
+   * Main method.
+   *
+   * @returns {Array} Array including consolidated A1Notations.
+   */
+  run() {
+    return this.getConsolidateA1Notations_(this.a1Notations);
+  }
+
+  /**
+   * ### Description
+   * Processing to consolidate A1Notations.
+   *
+   * @param {Array} a1Notations Array including the inputted A1Notations.
+   * @returns {Array} Array including consolidated A1Notations.
+   */
+  getConsolidateA1Notations_(a1Notations) {
+    const expandedA1Notations = expandA1Notations(a1Notations).flat();
+    const orgGridRanges = expandedA1Notations.map(e => convA1NotationToGridRange(e, 0));
+    const gridRanges = orgGridRanges
+      .sort((a, b) => a.startColumnIndex < b.startColumnIndex ? 1 : -1)
+      .sort((a, b) => a.startRowIndex > b.startRowIndex ? 1 : -1);
+    const maxRow = Math.max(...gridRanges.map(({ endRowIndex }) => endRowIndex));
+    const maxCol = Math.max(...gridRanges.map(({ endColumnIndex }) => endColumnIndex));
+    const obj = gridRanges.reduce((o, e) => {
+      const { startRowIndex, endRowIndex, startColumnIndex, endColumnIndex } = e;
+      const key = `sr@${startRowIndex}_er@${endRowIndex}_sc@${startColumnIndex}_ec@${endColumnIndex}`;
+      o[key] = e;
+      return o;
+    }, {});
+    let copiedGridranges = gridRanges.slice();
+    let copiedObj = { ...obj };
+    const res = [];
+    do {
+      const resObj = this.getMaxAreas_({ obj: copiedObj, gridRanges: copiedGridranges, maxRow, maxCol });
+      res.push(resObj);
+      if (resObj.length > 0) {
+        const removeKeys = resObj.flatMap(({ removeKeys }) => removeKeys.flatMap(({ remove }) => remove));
+        copiedObj = Object.fromEntries(Object.entries(copiedObj).filter(([k]) => !removeKeys.includes(k)));
+        copiedGridranges = Object.entries(copiedObj).map(([, v]) => v);
+      }
+    } while (Object.keys(copiedObj).length > 0);
+    const result = res.reduce((ar, e) => {
+      if (e.length > 0) {
+        e.forEach(f => {
+          f.removeKeys.forEach(g => {
+            if (g.topLeft == g.bottomRight) {
+              ar.push(g.topLeft)
+            } else {
+              ar.push(`${g.topLeft}:${g.bottomRight}`);
+            }
+          });
+        });
+      }
+      return ar;
+    }, []);
+    return result;
+  }
+
+  /**
+   * ### Description
+   * Calculated the maximum rectangles from the inputted A1Notations.
+   *
+   * @param {Object} object GridRange converted from the inputted A1Notations, the numbers of maximum row and column. 
+   * @returns {Object} Object including the calculated maximum rectangles.
+   */
+  getMaxAreas_(object) {
+    let { obj, gridRanges, maxRow, maxCol } = object;
+    const areas = gridRanges.map(o => {
+      const { startRowIndex, startColumnIndex } = o;
+      const cc = [];
+      const rr = [];
+      for (let r = startRowIndex; r < maxRow; r++) {
+        for (let c = startColumnIndex; c < maxCol; c++) {
+          const key = `sr@${r}_er@${r + 1}_sc@${c}_ec@${c + 1}`;
+          if (!obj[key]) {
+            cc.push(c - startColumnIndex);
+            break;
+          } else if (c == maxCol - 1) {
+            cc.push(c - startColumnIndex + 1);
+            break;
+          }
+        }
+      }
+      for (let c = startColumnIndex; c < maxCol; c++) {
+        for (let r = startRowIndex; r < maxRow; r++) {
+          const key = `sr@${r}_er@${r + 1}_sc@${c}_ec@${c + 1}`;
+          if (!obj[key]) {
+            rr.push(r - startRowIndex);
+            break;
+          } else if (r == maxRow - 1) {
+            rr.push(r - startRowIndex + 1);
+            break;
+          }
+        }
+      }
+      const r1 = rr.reduce((oo, e) => {
+        if (e < oo.temp) {
+          oo.temp = e;
+          oo.v.push(oo.temp);
+        } else {
+          oo.v.push(oo.temp);
+        }
+        return oo;
+      }, { temp: rr[0], v: [] });
+      const c1 = cc.reduce((oo, e) => {
+        if (e < oo.temp) {
+          oo.temp = e;
+          oo.v.push(oo.temp);
+        } else {
+          oo.v.push(oo.temp);
+        }
+        return oo;
+      }, { temp: cc[0], v: [] });
+      const r0 = r1.v.indexOf(0);
+      const c0 = c1.v.indexOf(0);
+      if (r0 > -1) {
+        r1.v.splice(r0);
+      }
+      if (c0 > -1) {
+        c1.v.splice(c0);
+      }
+      const areas = [];
+      let c1v = c1.v.slice();
+      for (let x = 1; x <= r1.v[0]; x++) {
+        const y = c1v.shift();
+        const key = `sr@${o.startRowIndex + x - 1}_er@${o.startRowIndex + x}_sc@${o.startColumnIndex + y - 1}_ec@${o.startColumnIndex + y}`;
+        obj = Object.fromEntries(Object.entries(obj).filter(([k]) => k != key));
+        areas.push({ r: x, c: y, area: x * y });
+      }
+      const maxArea = Math.max(...areas.map(e => e.area));
+      const tempMaxAreaObj = areas.filter(e => e.area == maxArea);
+      if (tempMaxAreaObj.length == 0) {
+        return [{ areas: [], maxAreaObj: [], o, removeKeys: [{ remove: [], topLeft: "", bottomRight: "" }] }];
+      }
+      const maxAreaObj = [tempMaxAreaObj[0]];
+      const removeKeys = maxAreaObj.map(e => {
+        const temp = [];
+        for (let i = o.startRowIndex; i < o.startRowIndex + e.r; i++) {
+          for (let j = o.startColumnIndex; j < o.startColumnIndex + e.c; j++) {
+            const key = `sr@${i}_er@${i + 1}_sc@${j}_ec@${j + 1}`;
+            temp.push(key);
+          }
+        }
+        return {
+          remove: temp,
+          topLeft: `${columnIndexToLetter(o.startColumnIndex)}${o.startRowIndex + 1}`,
+          bottomRight: `${columnIndexToLetter(o.startColumnIndex + e.c - 1)}${o.startRowIndex + e.r}`
+        };
+      });
+      return { areas, maxAreaObj, o, removeKeys };
+    });
+    const a = Math.max(...areas.map(({ maxAreaObj }) => (maxAreaObj && maxAreaObj.length > 0 && maxAreaObj[0]?.area) ? maxAreaObj[0].area : -1));
+    const result = areas.filter(({ maxAreaObj }) => maxAreaObj && maxAreaObj.length > 0 && maxAreaObj[0]?.area && maxAreaObj[0]?.area == a);
+    return result;
+  }
+}
