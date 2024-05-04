@@ -637,3 +637,34 @@ class ConsolidateA1Notations {
     return result;
   }
 }
+
+/**
+ * ### Description
+ * This method is used for converting Blob to the data URL.
+ * 
+ * ### Sample script
+ * ```
+ * const blob = Utilities.newBlob("sample", MimeType.PLAIN_TEXT);
+ * const res = UtlApp_test.blobToDataUrl(blob);
+ * console.log(res);
+ * ```
+ * 
+ * Result is as follows.
+ * 
+ * ```
+ * data:text/plain;base64,c2FtcGxl
+ * ```
+ * 
+ * @param {Blob} blob Blob
+ * @return {String} Data URL converted from Blob.
+ */
+function blobToDataUrl(blob) {
+  if (typeof blob != "object" || blob.toString() != "Blob") {
+    throw new Error("Please give Blob as an argument.");
+  }
+  const mimeType = blob.getContentType();
+  if (!mimeType) {
+    throw new Error("Given Blob has no mimeType. Please set the mimeType to Blob.");
+  }
+  return `data:${mimeType};base64,${Utilities.base64Encode(blob.getBytes())}`;
+}

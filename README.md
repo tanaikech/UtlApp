@@ -96,6 +96,7 @@ In order to use this library, please install the library as follows.
 | [parseQueryParameters](#parsequeryparameters)           | This method is used for parsing the URL including the query parameters.       |
 | [expandA1Notations](#expandA1Notations)                 | This method is used for expanding A1Notations.                                |
 | [consolidateA1Notations](#consolidatea1notations) | This method is used for consolidating the scattered A1Notations. |
+| [blobToDataUrl](#blobtodataurl) | This method is used for converting Blob to the data URL. |
 
 ## Show document in script editor
 
@@ -1937,6 +1938,45 @@ class ConsolidateA1Notations {
 }
 ````
 
+<a name="blobtodataurl"></a>
+
+### blobToDataUrl
+
+This method is used for converting Blob to the data URL.
+
+````javascript
+/**
+ * ### Description
+ * This method is used for converting Blob to the data URL.
+ * 
+ * ### Sample script
+ * ```
+ * const blob = Utilities.newBlob("sample", MimeType.PLAIN_TEXT);
+ * const res = UtlApp_test.blobToDataUrl(blob);
+ * console.log(res);
+ * ```
+ * 
+ * Result is as follows.
+ * 
+ * ```
+ * data:text/plain;base64,c2FtcGxl
+ * ```
+ * 
+ * @param {Blob} blob Blob
+ * @return {String} Data URL converted from Blob.
+ */
+function blobToDataUrl(blob) {
+  if (typeof blob != "object" || blob.toString() != "Blob") {
+    throw new Error("Please give Blob as an argument.");
+  }
+  const mimeType = blob.getContentType();
+  if (!mimeType) {
+    throw new Error("Given Blob has no mimeType. Please set the mimeType to Blob.");
+  }
+  return `data:${mimeType};base64,${Utilities.base64Encode(blob.getBytes())}`;
+}
+````
+
 ---
 
 # If you want to use only one method in the above methods without using a library
@@ -2029,5 +2069,9 @@ I believe that these methods will help to develop the applications created by Go
 - v1.0.5 (April 16, 2024)
 
   1. Methods of [consolidateA1Notations](#consolidatea1notations) was added. When this method is used, the scattered A1Notations can be consolidated.
+
+- v1.0.6 (May 4, 2024)
+
+  1. Methods of [blobToDataUrl](#blobtodataurl) was added. When this method is used, the Blob data can be converted to the data URL.
 
 [TOP](#top)
