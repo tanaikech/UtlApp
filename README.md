@@ -67,8 +67,8 @@ In order to use this library, please install the library as follows.
 | [convArrayToObject](#convarraytoobject)           | Converting 2 dimensional array to JSON object.                                  |
 | [unpivot](#unpivot)                               | Converting 2-dimensional array as unpivot (reverse pivot).                      |
 | [reverseUnpivot](#reverseunpivot)                 | Reversing 2-dimensional array with unpivot.                                     |
-| [dotProduct](#dotproduct)                 | Calculate dot product from 2 arrays.                                     |
-| [cosineSimilarity](#cosinesimilarity)                 | Calculate cosine similarity from 2 arrays.                                     |
+| [dotProduct](#dotproduct)                         | Calculate dot product from 2 arrays.                                            |
+| [cosineSimilarity](#cosinesimilarity)             | Calculate cosine similarity from 2 arrays.                                      |
 
 ## For binary processing
 
@@ -85,18 +85,21 @@ In order to use this library, please install the library as follows.
 
 ## For string processing
 
-| Methods                                                 | Description                                                                   |
-| :------------------------------------------------------ | :---------------------------------------------------------------------------- |
-| [ConvText](#convtext)                                   | Converting text as unicode.                                                   |
-| [columnLetterToIndex](#columnlettertoindex)             | Converting colum letter to column index. Start of column index is 0.          |
-| [columnIndexToLetter](#columnindextoletter)             | Converting colum index to column letter. Start of column index is 0.          |
-| [convA1NotationToGridRange](#conva1notationtogridrange) | Converting a1Notation to gridrange. This will be useful for using Sheets API. |
-| [convGridRangeToA1Notation](#convgridrangetoa1notation) | Converting gridrange to a1Notation. This will be useful for using Sheets API. |
-| [addQueryParameters](#addqueryparameters)               | This method is used for adding the query parameters to the URL.               |
-| [parseQueryParameters](#parsequeryparameters)           | This method is used for parsing the URL including the query parameters.       |
-| [expandA1Notations](#expandA1Notations)                 | This method is used for expanding A1Notations.                                |
-| [consolidateA1Notations](#consolidatea1notations) | This method is used for consolidating the scattered A1Notations. |
-| [blobToDataUrl](#blobtodataurl) | This method is used for converting Blob to the data URL. |
+| Methods                                                 | Description                                                                      |
+| :------------------------------------------------------ | :------------------------------------------------------------------------------- |
+| [ConvText](#convtext)                                   | Converting text as unicode.                                                      |
+| [columnLetterToIndex](#columnlettertoindex)             | Converting colum letter to column index. Start of column index is 0.             |
+| [columnIndexToLetter](#columnindextoletter)             | Converting colum index to column letter. Start of column index is 0.             |
+| [convA1NotationToGridRange](#conva1notationtogridrange) | Converting a1Notation to gridrange. This will be useful for using Sheets API.    |
+| [convGridRangeToA1Notation](#convgridrangetoa1notation) | Converting gridrange to a1Notation. This will be useful for using Sheets API.    |
+| [addQueryParameters](#addqueryparameters)               | This method is used for adding the query parameters to the URL.                  |
+| [parseQueryParameters](#parsequeryparameters)           | This method is used for parsing the URL including the query parameters.          |
+| [expandA1Notations](#expandA1Notations)                 | This method is used for expanding A1Notations.                                   |
+| [consolidateA1Notations](#consolidatea1notations)       | This method is used for consolidating the scattered A1Notations.                 |
+| [blobToDataUrl](#blobtodataurl)                         | This method is used for converting Blob to the data URL.                         |
+| [snake_caseToCamelCase](#snakecasetocamelcase)          | This method is used for converting a string of the snake case to the camel case. |
+| [camelCaseTosnake_case](#camelcasetosnakecase)          | This method is used for converting a string of the camel case to the snake case. |
+| [createFormDataObject](#createformdataobject)           | This method is used for creating the form data to HTTP request from an object.   |
 
 ## Show document in script editor
 
@@ -809,7 +812,7 @@ function reverseUnpivot(values) {
 
 Calculate dot product from 2 arrays.
 
-```javascript
+````javascript
 /**
  * ### Description
  * Calculate dot product from 2 arrays.
@@ -829,9 +832,9 @@ function dotProduct(array1, array2) {
   if (!Array.isArray(array1) || !Array.isArray(array2)) {
     throw new Error("Please give 2 arrays.");
   }
-  return array1.reduce((t, e, i) => t += e * array2[i], 0);
+  return array1.reduce((t, e, i) => (t += e * array2[i]), 0);
 }
-```
+````
 
 <a name="cosinesimilarity"></a>
 
@@ -839,7 +842,7 @@ function dotProduct(array1, array2) {
 
 Calculate cosine similarity from 2 arrays. This can be used with "[Semantic Search using Gemini Pro API with Google Apps Script](https://medium.com/google-cloud/semantic-search-using-gemini-pro-api-with-google-apps-script-5e511e26eaf0)" of my report.
 
-```javascript
+````javascript
 /**
  * ### Description
  * Calculate cosine similarity from 2 arrays.
@@ -859,11 +862,13 @@ function cosineSimilarity(array1, array2) {
   if (!Array.isArray(array1) || !Array.isArray(array2)) {
     throw new Error("Please give 2 arrays.");
   }
-  const dotProduct = array1.reduce((t, e, i) => t += e * array2[i], 0);
-  const magnitudes = [array1, array2].map(e => Math.sqrt(e.reduce((t, f) => t += f * f, 0))).reduce((t, f) => t *= f, 1);
+  const dotProduct = array1.reduce((t, e, i) => (t += e * array2[i]), 0);
+  const magnitudes = [array1, array2]
+    .map((e) => Math.sqrt(e.reduce((t, f) => (t += f * f), 0)))
+    .reduce((t, f) => (t *= f), 1);
   return dotProduct / magnitudes;
 }
-```
+````
 
 ---
 
@@ -1443,7 +1448,7 @@ Converting gridrange to a1Notation. This will be useful for using Sheets API. [R
  * ### Description
  * Converting gridrange to a1Notation. This will be useful for using Sheets API.
  * Ref: https://tanaikech.github.io/2017/07/31/converting-a1notation-to-gridrange-for-google-sheets-api/
- * 
+ *
  * ### Sample script 1
  * ```
  * const gridRange = {
@@ -1457,7 +1462,7 @@ Converting gridrange to a1Notation. This will be useful for using Sheets API. [R
  * const res = UtlApp.convGridRangeToA1Notation(gridRange, sheetName);
  * console.log(res); // 'Sheet1'!AB25:AD51
  * ```
- * 
+ *
  * ### Sample script 2
  * ```
  * const gridRange = {
@@ -1470,7 +1475,7 @@ Converting gridrange to a1Notation. This will be useful for using Sheets API. [R
  * const res = UtlApp.convGridRangeToA1Notation(gridRange);
  * console.log(res); // AB25:AD51
  * ```
- * 
+ *
  * @param {Object} gridrange Gridrange of range.
  * @param {String} sheetName Sheet name of the range.
  * @return {String} A1Notation.
@@ -1526,7 +1531,7 @@ This method is used for adding the query parameters to the URL. [Ref](https://ta
  * ### Description
  * This method is used for adding the query parameters to the URL.
  * Ref: https://tanaikech.github.io/2018/07/12/adding-query-parameters-to-url-using-google-apps-script/
- * 
+ *
  * ### Sample script 1
  * ```
  * const url = "https://sampleUrl";
@@ -1538,7 +1543,7 @@ This method is used for adding the query parameters to the URL. [Ref](https://ta
  * const endpoint = UtlApp.addQueryParameters(url, query);
  * console.log(endpoint); // https://sampleUrl?query1=value1A&query1=value1B&query1=value1C&query2=value2A%2C%20value2B&query3=value3A%2Fvalue3B
  * ```
- * 
+ *
  * ### Sample script 2
  * ```
  * const url = "";
@@ -1550,16 +1555,27 @@ This method is used for adding the query parameters to the URL. [Ref](https://ta
  * const endpoint = UtlApp.addQueryParameters(url, query);
  * console.log(endpoint); // query1=value1A&query1=value1B&query1=value1C&query2=value2A%2C%20value2B&query3=value3A%2Fvalue3B
  * ```
- * 
+ *
  * @param {String} url The base URL for adding the query parameters.
  * @param {Object} obj JSON object including query parameters.
  * @return {String} URL including the query parameters.
  */
 function addQueryParameters(url, obj) {
   if (url === null || obj === null || typeof url != "string") {
-    throw new Error("Please give URL (String) and query parameter (JSON object).");
+    throw new Error(
+      "Please give URL (String) and query parameter (JSON object)."
+    );
   }
-  return (url == "" ? "" : `${url}?`) + Object.entries(obj).flatMap(([k, v]) => Array.isArray(v) ? v.map(e => `${k}=${encodeURIComponent(e)}`) : `${k}=${encodeURIComponent(v)}`).join("&");
+  return (
+    (url == "" ? "" : `${url}?`) +
+    Object.entries(obj)
+      .flatMap(([k, v]) =>
+        Array.isArray(v)
+          ? v.map((e) => `${k}=${encodeURIComponent(e)}`)
+          : `${k}=${encodeURIComponent(v)}`
+      )
+      .join("&")
+  );
 }
 ````
 
@@ -1745,20 +1761,20 @@ You can see my report using this method at [https://medium.com/@tanaike/consolid
 /**
  * ### Description
  * This method is used for consolidating the scattered A1Notations.
- * 
+ *
  * ### Sample script
  * ```
  * const a1Notations = ["C1", "I1", "B2", "C2", "D2", "E2", "F2", "H2", "I2", "C3", "D3", "F3", "H3", "I3", "C4", "D4", "E4", "H4", "K4", "C5", "E5", "F5", "I5", "J5", "K5", "F6", "I6", "K6", "D7", "E7", "I7", "J7", "K7", "D8", "I8", "J8", "D9", "J9", "K9", "D10"];
  * const res = UtlApp.consolidateA1Notations(a1Notations);
  * console.log(JSON.stringify(res));
  * ```
- * 
+ *
  * Result is as follows.
- * 
+ *
  * ```
  * ["C1:C5","K4:K7","I5:I8","D7:D10","I1:I3","D2:F2","H2:H4","J7:J9","D3:D4","E4:E5","F5:F6","B2","F3","J5","E7","K9"]
  * ```
- * 
+ *
  * @param {Array} a1Notations Scattered A1Notations.
  * @return {Array} Array including the consolidated A1Notations.
  */
@@ -1797,14 +1813,21 @@ class ConsolidateA1Notations {
    */
   getConsolidateA1Notations_(a1Notations) {
     const expandedA1Notations = expandA1Notations(a1Notations).flat();
-    const orgGridRanges = expandedA1Notations.map(e => convA1NotationToGridRange(e, 0));
+    const orgGridRanges = expandedA1Notations.map((e) =>
+      convA1NotationToGridRange(e, 0)
+    );
     const gridRanges = orgGridRanges
-      .sort((a, b) => a.startColumnIndex < b.startColumnIndex ? 1 : -1)
-      .sort((a, b) => a.startRowIndex > b.startRowIndex ? 1 : -1);
-    const maxRow = Math.max(...gridRanges.map(({ endRowIndex }) => endRowIndex));
-    const maxCol = Math.max(...gridRanges.map(({ endColumnIndex }) => endColumnIndex));
+      .sort((a, b) => (a.startColumnIndex < b.startColumnIndex ? 1 : -1))
+      .sort((a, b) => (a.startRowIndex > b.startRowIndex ? 1 : -1));
+    const maxRow = Math.max(
+      ...gridRanges.map(({ endRowIndex }) => endRowIndex)
+    );
+    const maxCol = Math.max(
+      ...gridRanges.map(({ endColumnIndex }) => endColumnIndex)
+    );
     const obj = gridRanges.reduce((o, e) => {
-      const { startRowIndex, endRowIndex, startColumnIndex, endColumnIndex } = e;
+      const { startRowIndex, endRowIndex, startColumnIndex, endColumnIndex } =
+        e;
       const key = `sr@${startRowIndex}_er@${endRowIndex}_sc@${startColumnIndex}_ec@${endColumnIndex}`;
       o[key] = e;
       return o;
@@ -1813,20 +1836,29 @@ class ConsolidateA1Notations {
     let copiedObj = { ...obj };
     const res = [];
     do {
-      const resObj = this.getMaxAreas_({ obj: copiedObj, gridRanges: copiedGridranges, maxRow, maxCol });
+      const resObj = this.getMaxAreas_({
+        obj: copiedObj,
+        gridRanges: copiedGridranges,
+        maxRow,
+        maxCol,
+      });
       res.push(resObj);
       if (resObj.length > 0) {
-        const removeKeys = resObj.flatMap(({ removeKeys }) => removeKeys.flatMap(({ remove }) => remove));
-        copiedObj = Object.fromEntries(Object.entries(copiedObj).filter(([k]) => !removeKeys.includes(k)));
+        const removeKeys = resObj.flatMap(({ removeKeys }) =>
+          removeKeys.flatMap(({ remove }) => remove)
+        );
+        copiedObj = Object.fromEntries(
+          Object.entries(copiedObj).filter(([k]) => !removeKeys.includes(k))
+        );
         copiedGridranges = Object.entries(copiedObj).map(([, v]) => v);
       }
     } while (Object.keys(copiedObj).length > 0);
     const result = res.reduce((ar, e) => {
       if (e.length > 0) {
-        e.forEach(f => {
-          f.removeKeys.forEach(g => {
+        e.forEach((f) => {
+          f.removeKeys.forEach((g) => {
             if (g.topLeft == g.bottomRight) {
-              ar.push(g.topLeft)
+              ar.push(g.topLeft);
             } else {
               ar.push(`${g.topLeft}:${g.bottomRight}`);
             }
@@ -1842,12 +1874,12 @@ class ConsolidateA1Notations {
    * ### Description
    * Calculated the maximum rectangles from the inputted A1Notations.
    *
-   * @param {Object} object GridRange converted from the inputted A1Notations, the numbers of maximum row and column. 
+   * @param {Object} object GridRange converted from the inputted A1Notations, the numbers of maximum row and column.
    * @returns {Object} Object including the calculated maximum rectangles.
    */
   getMaxAreas_(object) {
     let { obj, gridRanges, maxRow, maxCol } = object;
-    const areas = gridRanges.map(o => {
+    const areas = gridRanges.map((o) => {
       const { startRowIndex, startColumnIndex } = o;
       const cc = [];
       const rr = [];
@@ -1875,24 +1907,30 @@ class ConsolidateA1Notations {
           }
         }
       }
-      const r1 = rr.reduce((oo, e) => {
-        if (e < oo.temp) {
-          oo.temp = e;
-          oo.v.push(oo.temp);
-        } else {
-          oo.v.push(oo.temp);
-        }
-        return oo;
-      }, { temp: rr[0], v: [] });
-      const c1 = cc.reduce((oo, e) => {
-        if (e < oo.temp) {
-          oo.temp = e;
-          oo.v.push(oo.temp);
-        } else {
-          oo.v.push(oo.temp);
-        }
-        return oo;
-      }, { temp: cc[0], v: [] });
+      const r1 = rr.reduce(
+        (oo, e) => {
+          if (e < oo.temp) {
+            oo.temp = e;
+            oo.v.push(oo.temp);
+          } else {
+            oo.v.push(oo.temp);
+          }
+          return oo;
+        },
+        { temp: rr[0], v: [] }
+      );
+      const c1 = cc.reduce(
+        (oo, e) => {
+          if (e < oo.temp) {
+            oo.temp = e;
+            oo.v.push(oo.temp);
+          } else {
+            oo.v.push(oo.temp);
+          }
+          return oo;
+        },
+        { temp: cc[0], v: [] }
+      );
       const r0 = r1.v.indexOf(0);
       const c0 = c1.v.indexOf(0);
       if (r0 > -1) {
@@ -1905,17 +1943,26 @@ class ConsolidateA1Notations {
       let c1v = c1.v.slice();
       for (let x = 1; x <= r1.v[0]; x++) {
         const y = c1v.shift();
-        const key = `sr@${o.startRowIndex + x - 1}_er@${o.startRowIndex + x}_sc@${o.startColumnIndex + y - 1}_ec@${o.startColumnIndex + y}`;
+        const key = `sr@${o.startRowIndex + x - 1}_er@${
+          o.startRowIndex + x
+        }_sc@${o.startColumnIndex + y - 1}_ec@${o.startColumnIndex + y}`;
         obj = Object.fromEntries(Object.entries(obj).filter(([k]) => k != key));
         areas.push({ r: x, c: y, area: x * y });
       }
-      const maxArea = Math.max(...areas.map(e => e.area));
-      const tempMaxAreaObj = areas.filter(e => e.area == maxArea);
+      const maxArea = Math.max(...areas.map((e) => e.area));
+      const tempMaxAreaObj = areas.filter((e) => e.area == maxArea);
       if (tempMaxAreaObj.length == 0) {
-        return [{ areas: [], maxAreaObj: [], o, removeKeys: [{ remove: [], topLeft: "", bottomRight: "" }] }];
+        return [
+          {
+            areas: [],
+            maxAreaObj: [],
+            o,
+            removeKeys: [{ remove: [], topLeft: "", bottomRight: "" }],
+          },
+        ];
       }
       const maxAreaObj = [tempMaxAreaObj[0]];
-      const removeKeys = maxAreaObj.map(e => {
+      const removeKeys = maxAreaObj.map((e) => {
         const temp = [];
         for (let i = o.startRowIndex; i < o.startRowIndex + e.r; i++) {
           for (let j = o.startColumnIndex; j < o.startColumnIndex + e.c; j++) {
@@ -1925,14 +1972,30 @@ class ConsolidateA1Notations {
         }
         return {
           remove: temp,
-          topLeft: `${columnIndexToLetter(o.startColumnIndex)}${o.startRowIndex + 1}`,
-          bottomRight: `${columnIndexToLetter(o.startColumnIndex + e.c - 1)}${o.startRowIndex + e.r}`
+          topLeft: `${columnIndexToLetter(o.startColumnIndex)}${
+            o.startRowIndex + 1
+          }`,
+          bottomRight: `${columnIndexToLetter(o.startColumnIndex + e.c - 1)}${
+            o.startRowIndex + e.r
+          }`,
         };
       });
       return { areas, maxAreaObj, o, removeKeys };
     });
-    const a = Math.max(...areas.map(({ maxAreaObj }) => (maxAreaObj && maxAreaObj.length > 0 && maxAreaObj[0]?.area) ? maxAreaObj[0].area : -1));
-    const result = areas.filter(({ maxAreaObj }) => maxAreaObj && maxAreaObj.length > 0 && maxAreaObj[0]?.area && maxAreaObj[0]?.area == a);
+    const a = Math.max(
+      ...areas.map(({ maxAreaObj }) =>
+        maxAreaObj && maxAreaObj.length > 0 && maxAreaObj[0]?.area
+          ? maxAreaObj[0].area
+          : -1
+      )
+    );
+    const result = areas.filter(
+      ({ maxAreaObj }) =>
+        maxAreaObj &&
+        maxAreaObj.length > 0 &&
+        maxAreaObj[0]?.area &&
+        maxAreaObj[0]?.area == a
+    );
     return result;
   }
 }
@@ -1948,20 +2011,20 @@ This method is used for converting Blob to the data URL.
 /**
  * ### Description
  * This method is used for converting Blob to the data URL.
- * 
+ *
  * ### Sample script
  * ```
  * const blob = Utilities.newBlob("sample", MimeType.PLAIN_TEXT);
  * const res = UtlApp_test.blobToDataUrl(blob);
  * console.log(res);
  * ```
- * 
+ *
  * Result is as follows.
- * 
+ *
  * ```
  * data:text/plain;base64,c2FtcGxl
  * ```
- * 
+ *
  * @param {Blob} blob Blob
  * @return {String} Data URL converted from Blob.
  */
@@ -1971,9 +2034,181 @@ function blobToDataUrl(blob) {
   }
   const mimeType = blob.getContentType();
   if (!mimeType) {
-    throw new Error("Given Blob has no mimeType. Please set the mimeType to Blob.");
+    throw new Error(
+      "Given Blob has no mimeType. Please set the mimeType to Blob."
+    );
   }
   return `data:${mimeType};base64,${Utilities.base64Encode(blob.getBytes())}`;
+}
+````
+
+<a name="snakecasetocamelcase"></a>
+
+### snake_caseToCamelCase
+
+This method is used for converting a string of the snake case to the camel case.
+
+````javascript
+/**
+ * ### Description
+ * This method is used for converting a string of the snake case to the camel case.
+ *
+ * ### Sample script
+ * ```
+ * const res = UtlApp.snake_caseToCamelCase("sample1_sample2_sample3", true);
+ * console.log(res);
+ * ```
+ *
+ * Result is as follows.
+ *
+ * ```
+ * Sample1Sample2Sample3
+ * ```
+ *
+ * @param {String} value String value of the snake case.
+ * @param {Boolean} upperCaseForTopCharacter When this is true, the top character is converted to upper case. The default is false.
+ * @return {String} String value converted from the snake case to the camel case.
+ */
+function snake_caseToCamelCase(value, upperCaseForTopCharacter = false) {
+  if (!value || typeof value != "string") {
+    throw new Error("Please set string value of the snake case.");
+  }
+  if (upperCaseForTopCharacter) {
+    value = value.replace(/^./, ([a]) => a.toUpperCase());
+  }
+  return value.replace(/_./g, ([, a]) => a.toUpperCase());
+}
+````
+
+<a name="camelcasetosnakecase"></a>
+
+### camelCaseTosnake_case
+
+This method is used for converting a string of the camel case to the snake case.
+
+````javascript
+/**
+ * ### Description
+ * This method is used for converting a string of the camel case to the snake case.
+ *
+ * ### Sample script
+ * ```
+ * const res = UtlApp.camelCaseTosnake_case("Sample1Sample2Sample3");
+ * console.log(res);
+ * ```
+ *
+ * Result is as follows.
+ *
+ * ```
+ * sample1_sample2_sample3
+ * ```
+ *
+ * @param {String} value String value of the snake case.
+ * @return {String} String value converted from the snake case to the camel case.
+ */
+function camelCaseTosnake_case(value) {
+  if (!value || typeof value != "string") {
+    throw new Error("Please set string value of the camel case.");
+  }
+  return value.replace(/.[A-Z]/g, ([a, b]) => `${a}_${b}`).toLocaleLowerCase();
+}
+````
+
+<a name="createformdataobject"></a>
+
+### createFormDataObject
+
+This method is used for creating the form data to HTTP request from an object.
+
+````javascript
+/**
+ * ### Description
+ * This method is used for creating the form data to HTTP request from an object.
+ *
+ * ### Sample script
+ * ```
+ * const obj = {
+ *   key0: "value0",
+ *   key1: {
+ *     key1a: "value1a",
+ *     key1b: "value1b",
+ *   },
+ *   key2: {
+ *     key2a: {
+ *       key2aa: "value2aa",
+ *       key2ab: "value2ab",
+ *     },
+ *     key1b: "value1b",
+ *   },
+ *   key3: ["ar1", "ar2", "ar3"],
+ * };
+ * const res = UtlApp.createFormDataObject(obj, false);
+ * console.log(res);
+ * ```
+ *
+ * Result is as follows.
+ *
+ * ```
+ * {
+ *   "key0": "value0",
+ *   "key1[key1a]": "value1a",
+ *   "key1[key1b]": "value1b",
+ *   "key2[key2a][key2aa]": "value2aa",
+ *   "key2[key2a][key2ab]": "value2ab",
+ *   "key2[key1b]": "value1b",
+ *   "key3[0]": "ar1",
+ *   "key3[1]": "ar2",
+ *   "key3[2]": "ar3"
+ * }
+ * ```
+ *
+ * When the 2nd argument is true, the followine result is obtained.
+ *
+ * ```
+ * key0=value0&key1[key1a]=value1a&key1[key1b]=value1b&key2[key2a][key2aa]=value2aa&key2[key2a][key2ab]=value2ab&key2[key1b]=value1b&key3[0]=ar1&key3[1]=ar2&key3[2]=ar3
+ * ```
+ *
+ * @param {Object} object Object for converting to the form data.
+ * @param {Boolean} asQueryParameters When this is true, the result is returned as the query parameter. The default is false.
+ * @return {Object|String}
+ */
+function createFormDataObject(object, asQueryParameters = false) {
+  if (!object || typeof object != "object") {
+    throw new Error("Please set an object.");
+  }
+
+  // ref: https://stackoverflow.com/a/19101235
+  Object.flatten = function (data) {
+    var result = {};
+    function recurse(cur, prop) {
+      if (Object(cur) !== cur) {
+        result[prop] = cur;
+      } else if (Array.isArray(cur)) {
+        for (var i = 0, l = cur.length; i < l; i++)
+          recurse(cur[i], prop + "[" + i + "]");
+        if (l == 0) result[prop] = [];
+      } else {
+        var isEmpty = true;
+        for (var p in cur) {
+          isEmpty = false;
+          recurse(cur[p], prop ? prop + "___" + p : p);
+        }
+        if (isEmpty && prop) result[prop] = {};
+      }
+    }
+    recurse(data, "");
+    return result;
+  };
+
+  const obj = Object.flatten(object);
+  const res = Object.entries(obj).map(([k, v]) => {
+    const [t1, ...t2] = k.split("___");
+    return [`${t1}${t2.map((e) => `[${e}]`).join("")}`, v];
+  });
+  if (asQueryParameters) {
+    return res.map(([k, v]) => `${k}=${encodeURIComponent(v)}`).join("&");
+  }
+  return Object.fromEntries(res);
 }
 ````
 
@@ -2072,6 +2307,12 @@ I believe that these methods will help to develop the applications created by Go
 
 - v1.0.6 (May 4, 2024)
 
-  1. Methods of [blobToDataUrl](#blobtodataurl) was added. When this method is used, the Blob data can be converted to the data URL.
+  1. A method of [blobToDataUrl](#blobtodataurl) was added. When this method is used, the Blob data can be converted to the data URL.
+
+- v1.0.7 (September 4, 2024)
+  1. Following 3 methods were added.
+  - [snake_caseToCamelCase](#snakecasetocamelcase): This method is used for converting a string of the snake case to the camel case.
+  - [camelCaseTosnake_case](#camelcasetosnakecase): This method is used for converting a string of the camel case to the snake case.
+  - [createFormDataObject](#createformdataobject): This method is used for creating the form data to HTTP request from an object.
 
 [TOP](#top)

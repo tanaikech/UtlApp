@@ -645,7 +645,7 @@ class ConsolidateA1Notations {
  * ### Sample script
  * ```
  * const blob = Utilities.newBlob("sample", MimeType.PLAIN_TEXT);
- * const res = UtlApp_test.blobToDataUrl(blob);
+ * const res = UtlApp.blobToDataUrl(blob);
  * console.log(res);
  * ```
  * 
@@ -667,4 +667,152 @@ function blobToDataUrl(blob) {
     throw new Error("Given Blob has no mimeType. Please set the mimeType to Blob.");
   }
   return `data:${mimeType};base64,${Utilities.base64Encode(blob.getBytes())}`;
+}
+
+/**
+ * ### Description
+ * This method is used for converting a string of the snake case to the camel case.
+ * 
+ * ### Sample script
+ * ```
+ * const res = UtlApp.snake_caseToCamelCase("sample1_sample2_sample3", true);
+ * console.log(res);
+ * ```
+ * 
+ * Result is as follows.
+ * 
+ * ```
+ * Sample1Sample2Sample3
+ * ```
+ * 
+ * @param {String} value String value of the snake case.
+ * @param {Boolean} upperCaseForTopCharacter When this is true, the top character is converted to upper case. The default is false.
+ * @return {String} String value converted from the snake case to the camel case.
+ */
+function snake_caseToCamelCase(value, upperCaseForTopCharacter = false) {
+  if (!value || typeof value != "string") {
+    throw new Error("Please set string value of the snake case.");
+  }
+  if (upperCaseForTopCharacter) {
+    value = value.replace(/^./, ([a]) => a.toUpperCase());
+  }
+  return value.replace(/_./g, ([, a]) => a.toUpperCase());
+}
+
+/**
+ * ### Description
+ * This method is used for converting a string of the camel case to the snake case.
+ * 
+ * ### Sample script
+ * ```
+ * const res = UtlApp.camelCaseTosnake_case("Sample1Sample2Sample3");
+ * console.log(res);
+ * ```
+ * 
+ * Result is as follows.
+ * 
+ * ```
+ * sample1_sample2_sample3
+ * ```
+ * 
+ * @param {String} value String value of the snake case.
+ * @return {String} String value converted from the snake case to the camel case.
+ */
+function camelCaseTosnake_case(value) {
+  if (!value || typeof value != "string") {
+    throw new Error("Please set string value of the camel case.");
+  }
+  return value.replace(/.[A-Z]/g, ([a, b]) => `${a}_${b}`).toLocaleLowerCase();
+}
+
+/**
+ * ### Description
+ * This method is used for creating the form data to HTTP request from an object.
+ * 
+ * ### Sample script
+ * ```
+ * const obj = {
+ *   key0: "value0",
+ *   key1: {
+ *     key1a: "value1a",
+ *     key1b: "value1b",
+ *   },
+ *   key2: {
+ *     key2a: {
+ *       key2aa: "value2aa",
+ *       key2ab: "value2ab",
+ *     },
+ *     key1b: "value1b",
+ *   },
+ *   key3: ["ar1", "ar2", "ar3"],
+ * };
+ * const res = UtlApp.createFormDataObject(obj, false);
+ * console.log(res);
+ * ```
+ * 
+ * Result is as follows.
+ * 
+ * ```
+ * {
+ *   "key0": "value0",
+ *   "key1[key1a]": "value1a",
+ *   "key1[key1b]": "value1b",
+ *   "key2[key2a][key2aa]": "value2aa",
+ *   "key2[key2a][key2ab]": "value2ab",
+ *   "key2[key1b]": "value1b",
+ *   "key3[0]": "ar1",
+ *   "key3[1]": "ar2",
+ *   "key3[2]": "ar3"
+ * }
+ * ```
+ * 
+ * When the 2nd argument is true, the followine result is obtained.
+ * 
+ * ```
+ * key0=value0&key1[key1a]=value1a&key1[key1b]=value1b&key2[key2a][key2aa]=value2aa&key2[key2a][key2ab]=value2ab&key2[key1b]=value1b&key3[0]=ar1&key3[1]=ar2&key3[2]=ar3
+ * ```
+ * 
+ * @param {Object} object Object for converting to the form data.
+ * @param {Boolean} asQueryParameters When this is true, the result is returned as the query parameter. The default is false.
+ * @return {Object|String} 
+ */
+function createFormDataObject(object, asQueryParameters = false) {
+  if (!object || typeof object != "object") {
+    throw new Error("Please set an object.");
+  }
+
+  // ref: https://stackoverflow.com/a/19101235
+  Object.flatten = function (data) {
+    var result = {};
+    function recurse(cur, prop) {
+      if (Object(cur) !== cur) {
+        result[prop] = cur;
+      } else if (Array.isArray(cur)) {
+        for (var i = 0, l = cur.length; i < l; i++)
+          recurse(cur[i], prop + "[" + i + "]");
+        if (l == 0)
+          result[prop] = [];
+      } else {
+        var isEmpty = true;
+        for (var p in cur) {
+          isEmpty = false;
+          recurse(cur[p], prop ? prop + "___" + p : p);
+        }
+        if (isEmpty && prop)
+          result[prop] = {};
+      }
+    }
+    recurse(data, "");
+    return result;
+  }
+
+  const obj = Object.flatten(object);
+  const res = Object.entries(obj).map(([k, v]) => {
+    const [t1, ...t2] = k.split("___");
+    return [`${t1}${t2.map(e => `[${e}]`).join("")}`, v];
+  });
+  if (asQueryParameters) {
+    return res.map(([k, v]) => `${k}=${encodeURIComponent(v)}`).join("&");
+  }
+  return Object.fromEntries(res);
 }
