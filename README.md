@@ -2015,7 +2015,7 @@ This method is used for converting Blob to the data URL.
  * ### Sample script
  * ```
  * const blob = Utilities.newBlob("sample", MimeType.PLAIN_TEXT);
- * const res = UtlApp_test.blobToDataUrl(blob);
+ * const res = UtlApp.blobToDataUrl(blob);
  * console.log(res);
  * ```
  *
