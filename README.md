@@ -1285,6 +1285,10 @@ var ConvText = {
 };
 ````
 
+#### Additional information
+
+As additional information, when you want to convert the above exported text to the normal text, you can use [normalize()](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/String/normalize). The sample script can be seen at [my answer on Stackoverflow](https://stackoverflow.com/a/79108290).
+
 <a name="columnlettertoIndex"></a>
 
 ### columnLetterToIndex
