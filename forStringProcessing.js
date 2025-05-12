@@ -136,6 +136,7 @@ function columnIndexToLetter(index = null) {
   if (index === null || isNaN(index)) {
     throw new Error("Please give the column indexr as a number. In this case, 1st number is 0.");
   }
+  let a;
   return (a = Math.floor(index / 26)) >= 0 ? columnIndexToLetter(a - 1) + String.fromCharCode(65 + (index % 26)) : "";
 }
 
