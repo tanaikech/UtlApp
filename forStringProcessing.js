@@ -123,9 +123,9 @@ function columnLetterToIndex(letter = null) {
  * 
  * ### Sample script
  * ```
- * const res1 = UtlApp.columnIndexToLetter(res1);
+ * const res1 = UtlApp.columnIndexToLetter(25);
  * console.log(res1); // Z
- * const res2 = UtlApp.columnIndexToLetter(res2);
+ * const res2 = UtlApp.columnIndexToLetter(26);
  * console.log(res2); // AA
  * ```
  * 
