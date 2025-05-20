@@ -1571,14 +1571,14 @@ function addQueryParameters(url, obj) {
       "Please give URL (String) and query parameter (JSON object)."
     );
   }
+  const o = Object.entries(obj);
   return (
-    (url == "" ? "" : `${url}?`) +
-    Object.entries(obj)
-      .flatMap(([k, v]) =>
-        Array.isArray(v)
-          ? v.map((e) => `${k}=${encodeURIComponent(e)}`)
-          : `${k}=${encodeURIComponent(v)}`
-      )
+    (url == "" ? "" : `${url}${o.length > 0 ? "?" : ""}`) +
+    o.flatMap(([k, v]) =>
+      Array.isArray(v)
+        ? v.map((e) => `${k}=${encodeURIComponent(e)}`)
+        : `${k}=${encodeURIComponent(v)}`
+    )
       .join("&")
   );
 }
@@ -2319,5 +2319,7 @@ I believe that these methods will help to develop the applications created by Go
   - [snake_caseToCamelCase](#snakecasetocamelcase): This method is used for converting a string of the snake case to the camel case.
   - [camelCaseTosnake_case](#camelcasetosnakecase): This method is used for converting a string of the camel case to the snake case.
   - [createFormDataObject](#createformdataobject): This method is used for creating the form data to HTTP request from an object.
+- v1.0.8 (May 20, 2025)
+  1. The method `addQueryParameters` was updated.
 
 [TOP](#top)

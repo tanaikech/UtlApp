@@ -312,7 +312,8 @@ function addQueryParameters(url, obj) {
   if (url === null || obj === null || typeof url != "string") {
     throw new Error("Please give URL (String) and query parameter (JSON object).");
   }
-  return (url == "" ? "" : `${url}?`) + Object.entries(obj).flatMap(([k, v]) => Array.isArray(v) ? v.map(e => `${k}=${encodeURIComponent(e)}`) : `${k}=${encodeURIComponent(v)}`).join("&");
+  const o = Object.entries(obj);
+  return (url == "" ? "" : `${url}${o.length > 0 ? "?" : ""}`) + o.flatMap(([k, v]) => Array.isArray(v) ? v.map(e => `${k}=${encodeURIComponent(e)}`) : `${k}=${encodeURIComponent(v)}`).join("&");
 }
 
 /**
