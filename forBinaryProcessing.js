@@ -277,3 +277,243 @@ function convertL16ToWav(inputData, sampleRate = 24000, numChannels = 1) {
   );
   return [...new Uint8Array(header), ...inputData];
 }
+
+/**
+ * ### Description
+ * This method is used for retrieving the MP3 tag information.
+ *
+ * ### Sample script
+ * ```
+ * const blob = ###; // Please set your MP3 blob.
+ * const res = UtlApp_test.getMP3Tag(blob);
+ * ```
+ * 
+ * When this script is run, the MP3 tag information is returned as JSON.
+ *
+ * @param {Blob} blob Blob of MP3 data.
+ * @return {Object} Object including MP3 tag information.
+ */
+function getMP3Tag(blob) {
+  return new GetMP3Tag().run(blob);
+}
+
+/**
+ * Class object for GetMP3Tag.
+ * 
+ * version 1.0.0
+ * @class
+ */
+class GetMP3Tag {
+  constructor() {
+    /** @private */
+    this.FRAME_ID_MAP = {
+      'TIT2': 'title', 'TPE1': 'artist', 'TALB': 'album',
+      'TRCK': 'track', 'TYER': 'year', 'TCON': 'genre',
+      'COMM': 'comment', 'TPE2': 'albumArtist', 'TLEN': 'lengthMs',
+      'TDRC': 'recordingTime'
+    };
+
+    /** @private */
+    this.BITRATES = {
+      'V1L1': [0, 32, 64, 96, 128, 160, 192, 224, 256, 288, 320, 352, 384, 416, 448],
+      'V1L2': [0, 32, 48, 56, 64, 80, 96, 112, 128, 160, 192, 224, 256, 320, 384],
+      'V1L3': [0, 32, 40, 48, 56, 64, 80, 96, 112, 128, 160, 192, 224, 256, 320],
+    };
+
+    /** @private */
+    this.SAMPLING_RATES = {
+      'MPEG1': [44100, 48000, 32000],
+      'MPEG2': [22050, 24000, 16000],
+      'MPEG2.5': [11025, 12000, 8000]
+    };
+  }
+
+  /**
+   * Get metadata and duration for an MP3 file in Google Drive by specifying its ID.
+   *
+   * @param {Blob} blob
+   * @return {Object}
+   */
+  run(blob) {
+    if (!blob) {
+      throw new Error("Set MP3 blob.");
+    }
+    const mimeType = blob.getContentType();
+    if (mimeType != "audio/mpeg") {
+      throw new Error(`The mimeType is "${mimeType}". This data is not MP3.`);
+    }
+    const bytes = blob.getBytes();
+    const fileSize = blob.getBytes().length;
+    let metadata = {
+      fileName: blob.getName(),
+      fileSize: fileSize,
+      mimeType: blob.getContentType(),
+      id3v2: null,
+      id3v1: null,
+      duration: null,
+      info: {}
+    };
+
+    // For ID3v2
+    const id3v2Data = this.parseId3v2Tag_(bytes);
+    if (id3v2Data) {
+      metadata.id3v2 = id3v2Data.tags;
+      Object.assign(metadata.info, id3v2Data.tags);
+    }
+    const id3v2TagSize = id3v2Data ? id3v2Data.size : 0;
+
+    // For ID3v1
+    const id3v1Data = this.parseId3v1Tag_(bytes, fileSize);
+    if (id3v1Data) {
+      metadata.id3v1 = id3v1Data;
+      for (const key in id3v1Data) {
+        if (!metadata.info[key]) {
+          metadata.info[key] = id3v1Data[key];
+        }
+      }
+    }
+
+    // For duration
+    metadata.duration = this.calculateDuration_(bytes, fileSize, id3v2TagSize);
+    if (metadata.duration) {
+      metadata.info.durationSeconds = metadata.duration.durationSeconds;
+      metadata.info.durationFormatted = metadata.duration.formatted;
+    }
+
+    return metadata;
+  }
+
+  /**
+   * Parsing ID3v2 tags
+   * 
+   * @param {Byte[]} bytes
+   * @return {Object}
+   * @private
+   */
+  parseId3v2Tag_(bytes) {
+    if (bytes[0] !== 0x49 || bytes[1] !== 0x44 || bytes[2] !== 0x33) {
+      return null;
+    }
+    const size = (bytes[6] << 21) | (bytes[7] << 14) | (bytes[8] << 7) | bytes[9];
+    const totalTagSize = size + 10;
+    let offset = 10;
+    const tags = {};
+    while (offset < totalTagSize) {
+      const frameId = String.fromCharCode(bytes[offset], bytes[offset + 1], bytes[offset + 2], bytes[offset + 3]);
+      if (frameId.charCodeAt(0) === 0) {
+        break;
+      }
+      const frameSize = (bytes[offset + 4] << 24) | (bytes[offset + 5] << 16) | (bytes[offset + 6] << 8) | bytes[offset + 7];
+      const frameDataStart = offset + 10;
+      const frameDataEnd = frameDataStart + frameSize;
+      if (frameDataEnd > totalTagSize) break;
+      if (this.FRAME_ID_MAP[frameId]) {
+        const encodingByte = bytes[frameDataStart];
+        let charset = 'ISO-8859-1';
+        let textStart = frameDataStart + 1;
+        if (encodingByte === 1) {
+          charset = 'UTF-16';
+          textStart += 2;
+        } else if (encodingByte === 3) {
+          charset = 'UTF-8';
+        }
+        const textBytes = bytes.slice(textStart, frameDataEnd);
+        let text = Utilities.newBlob(textBytes).getDataAsString(charset).replace(/\0/g, '').trim();
+        if (frameId === 'TDRC' && !tags['year']) {
+          tags['year'] = text.substring(0, 4);
+        } else {
+          tags[this.FRAME_ID_MAP[frameId]] = text;
+        }
+      }
+      offset = frameDataEnd;
+    }
+    return { tags, size: totalTagSize };
+  }
+
+  /**
+   * Parsing ID3v1 tags
+   * 
+   * @param {Byte[]} bytes
+   * @param {Number} fileSize
+   * @return {Object}
+   * @private
+   */
+  parseId3v1Tag_(bytes, fileSize) {
+    if (fileSize < 128) return null;
+    const tagOffset = fileSize - 128;
+    const tagBytes = bytes.slice(tagOffset);
+    if (String.fromCharCode(tagBytes[0], tagBytes[1], tagBytes[2]) !== 'TAG') {
+      return null;
+    }
+    const getString = (start, length) => {
+      return Utilities.newBlob(tagBytes.slice(start, start + length)).getDataAsString('ISO-8859-1').replace(/\0/g, '').trim();
+    };
+    const tags = {};
+    tags.title = getString(3, 30);
+    tags.artist = getString(33, 30);
+    tags.album = getString(63, 30);
+    tags.year = getString(93, 4);
+    tags.comment = getString(97, 30);
+    if (tagBytes[125] === 0 && tagBytes[126] !== 0) {
+      tags.track = tagBytes[126];
+      tags.comment = getString(97, 28);
+    }
+    return tags;
+  }
+
+  /**
+   * Calculating duration
+   * 
+   * @param {Byte[]} bytes
+   * @param {Number} fileSize
+   * @param {Number} id3v2TagSize
+   * @return {Object}
+   * @private
+   */
+  calculateDuration_(bytes, fileSize, id3v2TagSize) {
+    let offset = id3v2TagSize;
+    let headerFound = false;
+    while (offset < bytes.length - 4 && !headerFound) {
+      if ((bytes[offset] & 0xFF) === 0xFF && (bytes[offset + 1] & 0xE0) === 0xE0) {
+        headerFound = true;
+      } else {
+        offset++;
+      }
+    }
+    if (!headerFound) {
+      return null;
+    }
+    const header_b1 = bytes[offset + 1] & 0xFF;
+    const header_b2 = bytes[offset + 2] & 0xFF;
+    const mpegVersionId = (header_b1 >> 3) & 0x03;
+    const mpegVersion = mpegVersionId == 3 ? "MPEG1" : mpegVersionId == 2 ? "MPEG2" : mpegVersionId == 0 ? "MPEG2.5" : null;
+    const layerId = (header_b1 >> 1) & 0x03;
+    const layer = layerId == 3 ? "L1" : layerId == 2 ? "L2" : layerId == 1 ? "L1" : null;
+    let bitrateKey;
+    if (mpegVersion === 'MPEG1') {
+      bitrateKey = 'V1' + layer;
+    } else {
+      console.warn(`MPEG Version ${mpegVersion} cannot be used.`);
+      return null;
+    }
+    const bitrateIndex = (header_b2 >> 4) & 0x0F;
+    if (bitrateIndex === 0 || bitrateIndex === 15) {
+      return null;
+    }
+    const bitrate = this.BITRATES[bitrateKey][bitrateIndex] * 1000;
+    const samplingRateIndex = (header_b2 >> 2) & 0x03;
+    if (samplingRateIndex === 3) {
+      return null;
+    }
+    const samplingRate = this.SAMPLING_RATES[mpegVersion][samplingRateIndex];
+    if (!samplingRate) {
+      return null;
+    }
+    const audioDataSize = fileSize - id3v2TagSize;
+    const durationSeconds = Math.floor((audioDataSize * 8) / bitrate);
+    const minutes = Math.floor(durationSeconds / 60);
+    const seconds = durationSeconds % 60;
+    const formatted = `${minutes}:${seconds < 10 ? '0' : ''}${seconds}`;
+    return { mpegVersion, layer, bitrate, samplingRate, durationSeconds, formatted };
+  }
+}
