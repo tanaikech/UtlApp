@@ -82,6 +82,7 @@ In order to use this library, please install the library as follows.
 | [convUint8ArToInt8Ar](#convuint8artoint8ar)               | Convert Uint8Array to Int8Array.                 |
 | [searchIndexFromDataByData](#searchindexfromdatabydata)   | Search index from base data using a search data. |
 | [splitByteArrayBySearchData](#splitbytearraybysearchdata) | Split byteArray by a search data.                |
+| [convertL16ToWav](#convertl16towav) | Converts a byte data of "audio/L16" to a byte data of "audio/wav".     |
 
 ## For string processing
 
@@ -1166,6 +1167,68 @@ function splitByteArrayBySearchData(baseData, searchData) {
     }
   } while (idx != -1);
   return res;
+}
+````
+
+<a name="convertl16towav"></a>
+
+### convertL16ToWav
+
+Converts a byte data of "audio/L16" to a byte data of "audio/wav". L16 assumes 16-bit PCM. This audio format is often used with Text-To-Speech (TTS).
+
+````javascript
+/**
+ * ### Description
+ * Converts a byte data of "audio/L16" to a byte data of "audio/wav".
+ * L16 assumes 16-bit PCM.
+ * This audio format is often used with Text-To-Speech (TTS).
+ * Ref: https://datatracker.ietf.org/doc/html/rfc2586
+ * Ref: https://medium.com/google-cloud/text-to-speech-tts-using-gemini-api-with-google-apps-script-6ece50a617fd
+ *
+ * ### Sample script
+ * ```
+ * const fileId = "###"; // file ID of "audio/L16";
+ * const data = DriveApp.getFileById(fileId).getBlob().getBytes();
+ * const sampleRate = 24000;
+ * const numChannels = 1;
+ * const blob = Utilities.newBlob(UtlApp_test.convertL16ToWav(data, sampleRate, numChannels), "audio/wav", "sample.wav");
+ * DriveApp.createFile(blob);
+ * ```
+ * 
+ * When this sample script is run, when the data is "audio/L16", the data is converted to "audio/wav" and save it as a file.
+ * 
+ * @param {Byte[]} inputData Input data (audio/L16).
+ * @param {number} sampleRate Ex. 8000, 11025, 16000, 22050, 24000, 32000, 44100, and 48000. Default is 24000.
+ * @param {number} numChannels - Mono and stereo are 1 and 2, respectively. Default is 1.
+ * @return {Byte[]} Converted data as byte data.
+ */
+function convertL16ToWav(inputData, sampleRate = 24000, numChannels = 1) {
+  if (!Array.isArray(inputData)) {
+    throw new Error("Invalid data.");
+  }
+  const bitsPerSample = 16;
+  const blockAlign = numChannels * bitsPerSample / 8;
+  const byteRate = Number(sampleRate) * blockAlign;
+  const dataSize = inputData.length;
+  const fileSize = 36 + dataSize;
+  const header = new ArrayBuffer(44);
+  const view = new DataView(header);
+  const data = [
+    { method: "setUint8", value: [..."RIFF"].map(e => e.charCodeAt(0)), add: [0, 1, 2, 3] },
+    { method: "setUint32", value: [fileSize], add: [4], littleEndian: true },
+    { method: "setUint8", value: [..."WAVE"].map(e => e.charCodeAt(0)), add: [8, 9, 10, 11] },
+    { method: "setUint8", value: [..."fmt "].map(e => e.charCodeAt(0)), add: [12, 13, 14, 15] },
+    { method: "setUint32", value: [16], add: [16], littleEndian: true },
+    { method: "setUint16", value: [1, numChannels], add: [20, 22], littleEndian: true },
+    { method: "setUint32", value: [Number(sampleRate), byteRate], add: [24, 28], littleEndian: true },
+    { method: "setUint16", value: [blockAlign, bitsPerSample], add: [32, 34], littleEndian: true },
+    { method: "setUint8", value: [..."data"].map(e => e.charCodeAt(0)), add: [36, 37, 38, 39] },
+    { method: "setUint32", value: [dataSize], add: [40], littleEndian: true },
+  ];
+  data.forEach(({ method, value, add, littleEndian }) =>
+    add.forEach((a, i) => view[method](a, value[i], littleEndian || false))
+  );
+  return [...new Uint8Array(header), ...inputData];
 }
 ````
 
@@ -2315,11 +2378,16 @@ I believe that these methods will help to develop the applications created by Go
   1. A method of [blobToDataUrl](#blobtodataurl) was added. When this method is used, the Blob data can be converted to the data URL.
 
 - v1.0.7 (September 4, 2024)
+
   1. Following 3 methods were added.
   - [snake_caseToCamelCase](#snakecasetocamelcase): This method is used for converting a string of the snake case to the camel case.
   - [camelCaseTosnake_case](#camelcasetosnakecase): This method is used for converting a string of the camel case to the snake case.
   - [createFormDataObject](#createformdataobject): This method is used for creating the form data to HTTP request from an object.
 - v1.0.8 (May 20, 2025)
   1. The method `addQueryParameters` was updated.
+
+- v1.0.9 (June 13, 2025)
+
+  1. The method [convertL16ToWav](#convertl16towav) was added.
 
 [TOP](#top)
