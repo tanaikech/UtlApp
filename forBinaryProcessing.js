@@ -239,11 +239,10 @@ function splitByteArrayBySearchData(baseData, searchData) {
  * const data = DriveApp.getFileById(fileId).getBlob().getBytes();
  * const sampleRate = 24000;
  * const numChannels = 1;
- * const blob = Utilities.newBlob(UtlApp_test.convertL16ToWav(data, sampleRate, numChannels), "audio/wav", "sample.wav");
- * DriveApp.createFile(blob);
+ * const convertedData = UtlApp_test.convertL16ToWav(data, sampleRate, numChannels); // "audio/was"
  * ```
  * 
- * When this sample script is run, when the data is "audio/L16", the data is converted to "audio/wav" and save it as a file.
+ * When this sample script is run, when the data is "audio/L16", the data is converted to "audio/wav".
  * 
  * @param {Byte[]} inputData Input data (audio/L16).
  * @param {number} sampleRate Ex. 8000, 11025, 16000, 22050, 24000, 32000, 44100, and 48000. Default is 24000.
