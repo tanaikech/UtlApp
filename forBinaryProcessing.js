@@ -526,7 +526,7 @@ class GetMP3Tag {
  * ### Sample script
  * ```
  * const blob = "###"; // Please set your blob.
- * const res = getInfFromBlob(blob);
+ * const res = UtlApp.getInfFromBlob(blob);
  * console.log(res);
  * ```
  * 

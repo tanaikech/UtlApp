@@ -1497,7 +1497,7 @@ The available mimeTypes are image/png, image/jpeg, image/gif, application/pdf, i
  * ### Sample script
  * ```
  * const blob = "###"; // Please set your blob.
- * const res = getInfFromBlob(blob);
+ * const res = UtlApp.getInfFromBlob(blob);
  * console.log(res);
  * ```
  * 
