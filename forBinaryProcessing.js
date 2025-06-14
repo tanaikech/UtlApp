@@ -239,7 +239,7 @@ function splitByteArrayBySearchData(baseData, searchData) {
  * const data = DriveApp.getFileById(fileId).getBlob().getBytes();
  * const sampleRate = 24000;
  * const numChannels = 1;
- * const convertedData = UtlApp_test.convertL16ToWav(data, sampleRate, numChannels); // "audio/wav"
+ * const convertedData = UtlApp.convertL16ToWav(data, sampleRate, numChannels); // "audio/wav"
  * ```
  * 
  * When this sample script is run, when the data is "audio/L16", the data is converted to "audio/wav".
@@ -285,7 +285,7 @@ function convertL16ToWav(inputData, sampleRate = 24000, numChannels = 1) {
  * ### Sample script
  * ```
  * const blob = ###; // Please set your MP3 blob.
- * const res = UtlApp_test.getMP3Tag(blob);
+ * const res = UtlApp.getMP3Tag(blob);
  * ```
  * 
  * When this script is run, the MP3 tag information is returned as JSON.
