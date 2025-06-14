@@ -84,6 +84,7 @@ In order to use this library, please install the library as follows.
 | [splitByteArrayBySearchData](#splitbytearraybysearchdata) | Split byteArray by a search data.                |
 | [convertL16ToWav](#convertl16towav) | Converts a byte data of "audio/L16" to a byte data of "audio/wav".     |
 | [getMP3Tag](#getmp3tag) | This method is used for retrieving the MP3 tag information.     |
+| [getInfFromBlob](#getinffromblob) | This method returns the information of blob.     |
 
 ## For string processing
 
@@ -1480,6 +1481,118 @@ class GetMP3Tag {
 }
 ````
 
+<a name="getinffromblob"></a>
+
+### getInfFromBlob
+
+This method returns the information of blob.
+The available mimeTypes are image/png, image/jpeg, image/gif, application/pdf, image/svg.
+
+````javascript
+/**
+ * ### Description
+ * Return information of blob.
+ * The available mimeTypes are image/png, image/jpeg, image/gif, application/pdf, image/svg.
+ * 
+ * ### Sample script
+ * ```
+ * const blob = "###"; // Please set your blob.
+ * const res = getInfFromBlob(blob);
+ * console.log(res);
+ * ```
+ * 
+ * Result is as follows.
+ * 
+ * ```
+ * {"identification":"PNG","width":123,"height":456,"filesize":12345}
+ * ```
+ * 
+ * @param {Blob} blob
+ * @return {Object}
+ */
+function getInfFromBlob(blob) {
+  const bytes = blob.getBytes();
+  const filesize = bytes.length;
+  if (filesize < 16) {
+    throw new Error("File size is too small.");
+  }
+  const b = bytes.map(byte => byte & 0xFF);
+
+  // For image/png
+  if ([0x89, 0x50, 0x4E, 0x47].every((e, i) => b[i] == e)) {
+    const width = (b[16] << 24) | (b[17] << 16) | (b[18] << 8) | b[19];
+    const height = (b[20] << 24) | (b[21] << 16) | (b[22] << 8) | b[23];
+    return { identification: "PNG", width, height, filesize };
+  }
+
+  // For image/jpeg
+  else if ([0xFF, 0xD8].every((e, i) => b[i] == e)) {
+    let pos = 2;
+    while (pos < b.length - 8) {
+      if (b[pos] !== 0xFF) {
+        pos++; continue;
+      }
+      const marker = b[pos + 1];
+      if ([0xC0, 0xC1, 0xC2].includes(marker)) {
+        const height = (b[pos + 5] << 8) | b[pos + 6];
+        const width = (b[pos + 7] << 8) | b[pos + 8];
+        return { identification: "JPEG", width, height, filesize };
+      }
+      const segmentLength = (b[pos + 2] << 8) | b[pos + 3];
+      pos += 2 + segmentLength;
+    }
+    return { identification: "JPEG", filesize };
+  }
+
+  // For image/gif
+  else if ([0x47, 0x49, 0x46, 0x38].every((e, i) => b[i] == e)) {
+    const width = b[6] | (b[7] << 8);
+    const height = b[8] | (b[9] << 8);
+    return { identification: "GIF", width, height, filesize };
+  }
+
+  // For application/pdf 
+  else if ([0x25, 0x50, 0x44, 0x46].every((e, i) => b[i] == e)) {
+    let pageCount = "N/A";
+    const content = blob.getDataAsString("ISO-8859-1");
+    const pagesMatch = content.match(/\/Type\s*\/Pages\s*[\s\S]*?\/Count\s+(\d+)/);
+    if (pagesMatch && pagesMatch[1]) {
+      pageCount = parseInt(pagesMatch[1], 10);
+    } else {
+      const countMatches = content.match(/\/Count\s+(\d+)/g);
+      if (countMatches) {
+        const counts = countMatches.map(match => parseInt(match.match(/\d+/)[0], 10));
+        pageCount = Math.max(...counts);
+      }
+    }
+    return { identification: "PDF", pageCount, filesize };
+  }
+
+  // For image/svg
+  const content = blob.getDataAsString();
+  if (content.trim().match(/^<\?xml[^>]*>\s*<svg|^<svg/i)) {
+    const xml = blob.getDataAsString();
+    const doc = XmlService.parse(xml);
+    const root = doc.getRootElement();
+    let width = root.getAttribute("width")?.getValue();
+    let height = root.getAttribute("height")?.getValue();
+    if (!width || !height) {
+      const viewBox = root.getAttribute("viewBox")?.getValue();
+      if (viewBox) {
+        const parts = viewBox.split(/[\s,]+/);
+        if (parts.length === 4) {
+          width = parts[2];
+          height = parts[3];
+        }
+      }
+    }
+    return { identification: "SVG", width: width || "N/A", height: height || "N/A", filesize };
+  }
+
+  return null;
+}
+````
+
 ---
 
 ## For string processing
@@ -2641,5 +2754,9 @@ I believe that these methods will help to develop the applications created by Go
 - v1.0.10 (June 13, 2025)
 
   1. The method [getMP3Tag](#getmp3tag) was added.
+
+- v1.0.11 (June 14, 2025)
+
+  1. The method [getInfFromBlob](#getinffromblob) was added.
 
 [TOP](#top)
