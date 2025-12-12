@@ -2186,6 +2186,8 @@ This method is used for consolidating the scattered A1Notations.
 
 You can see my report using this method at [https://medium.com/@tanaike/consolidate-scattered-a1notations-into-continuous-ranges-on-google-spreadsheet-using-google-apps-c9ce870dcb99](https://medium.com/@tanaike/consolidate-scattered-a1notations-into-continuous-ranges-on-google-spreadsheet-using-google-apps-c9ce870dcb99).
 
+**In the current version, the result is returned as an array. The array includes the combinations of the calculated result. The 1st element of the array is the best calculated result.**
+
 ````javascript
 /**
  * ### Description
