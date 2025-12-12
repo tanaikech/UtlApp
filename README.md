@@ -2190,242 +2190,280 @@ You can see my report using this method at [https://medium.com/@tanaike/consolid
 /**
  * ### Description
  * This method is used for consolidating the scattered A1Notations.
- *
+ * 
  * ### Sample script
  * ```
  * const a1Notations = ["C1", "I1", "B2", "C2", "D2", "E2", "F2", "H2", "I2", "C3", "D3", "F3", "H3", "I3", "C4", "D4", "E4", "H4", "K4", "C5", "E5", "F5", "I5", "J5", "K5", "F6", "I6", "K6", "D7", "E7", "I7", "J7", "K7", "D8", "I8", "J8", "D9", "J9", "K9", "D10"];
- * const res = UtlApp.consolidateA1Notations(a1Notations);
- * console.log(JSON.stringify(res));
+ * const res = consolidateA1Notations(a1Notations);
+ * if (res.length > 0) {
+ *   console.log(JSON.stringify(res[0]));
+ * }
  * ```
- *
+ * 
  * Result is as follows.
- *
+ * 
  * ```
- * ["C1:C5","K4:K7","I5:I8","D7:D10","I1:I3","D2:F2","H2:H4","J7:J9","D3:D4","E4:E5","F5:F6","B2","F3","J5","E7","K9"]
+ * ["B2:F2","K4:K7","C3:D4","I5:I8","I1:I3","H2:H4","D7:D10","E4:E5","F5:F6","J7:J9","C5","J5","F3","E7","K9","C1"]
  * ```
- *
+ * 
+ * Wrapper function for external calls.
  * @param {Array} a1Notations Scattered A1Notations.
- * @return {Array} Array including the consolidated A1Notations.
+ * @return {Array} Array of arrays, where the 0th element is the optimal solution.
  */
-function consolidateA1Notations(array) {
-  return new ConsolidateA1Notations(array).run();
+function consolidateA1Notations(a1Notations) {
+  return new ConsolidateA1Notations(a1Notations).run();
 }
 
 /**
- * Consolidate Scattered A1Notations into Continuous Ranges on Google Spreadsheet.
+ * Class definition: Logic for consolidating A1Notations (Randomized Greedy Approach).
  */
 class ConsolidateA1Notations {
-  /**
-   *
-   * @param {Array} a1Notations Scattered A1Notations.
-   */
   constructor(a1Notations) {
     this.a1Notations = a1Notations;
+    this.solutions = []; // Store valid solutions
   }
 
-  /**
-   * ### Description
-   * Main method.
-   *
-   * @returns {Array} Array including consolidated A1Notations.
-   */
   run() {
-    return this.getConsolidateA1Notations_(this.a1Notations);
-  }
+    // 1. Convert input to a Set of coordinates "row,col"
+    const initialCells = this.getUniqueCells_(this.a1Notations);
 
-  /**
-   * ### Description
-   * Processing to consolidate A1Notations.
-   *
-   * @param {Array} a1Notations Array including the inputted A1Notations.
-   * @returns {Array} Array including consolidated A1Notations.
-   */
-  getConsolidateA1Notations_(a1Notations) {
-    const expandedA1Notations = expandA1Notations(a1Notations).flat();
-    const orgGridRanges = expandedA1Notations.map((e) =>
-      convA1NotationToGridRange(e, 0)
-    );
-    const gridRanges = orgGridRanges
-      .sort((a, b) => (a.startColumnIndex < b.startColumnIndex ? 1 : -1))
-      .sort((a, b) => (a.startRowIndex > b.startRowIndex ? 1 : -1));
-    const maxRow = Math.max(
-      ...gridRanges.map(({ endRowIndex }) => endRowIndex)
-    );
-    const maxCol = Math.max(
-      ...gridRanges.map(({ endColumnIndex }) => endColumnIndex)
-    );
-    const obj = gridRanges.reduce((o, e) => {
-      const { startRowIndex, endRowIndex, startColumnIndex, endColumnIndex } =
-        e;
-      const key = `sr@${startRowIndex}_er@${endRowIndex}_sc@${startColumnIndex}_ec@${endColumnIndex}`;
-      o[key] = e;
-      return o;
-    }, {});
-    let copiedGridranges = gridRanges.slice();
-    let copiedObj = { ...obj };
-    const res = [];
-    do {
-      const resObj = this.getMaxAreas_({
-        obj: copiedObj,
-        gridRanges: copiedGridranges,
-        maxRow,
-        maxCol,
-      });
-      res.push(resObj);
-      if (resObj.length > 0) {
-        const removeKeys = resObj.flatMap(({ removeKeys }) =>
-          removeKeys.flatMap(({ remove }) => remove)
-        );
-        copiedObj = Object.fromEntries(
-          Object.entries(copiedObj).filter(([k]) => !removeKeys.includes(k))
-        );
-        copiedGridranges = Object.entries(copiedObj).map(([, v]) => v);
-      }
-    } while (Object.keys(copiedObj).length > 0);
-    const result = res.reduce((ar, e) => {
-      if (e.length > 0) {
-        e.forEach((f) => {
-          f.removeKeys.forEach((g) => {
-            if (g.topLeft == g.bottomRight) {
-              ar.push(g.topLeft);
-            } else {
-              ar.push(`${g.topLeft}:${g.bottomRight}`);
-            }
-          });
-        });
-      }
-      return ar;
-    }, []);
-    return result;
-  }
+    // 2. Execute Search
+    // First, create a baseline using a deterministic method (Greedy)
+    this.performIteration_(initialCells, false);
 
-  /**
-   * ### Description
-   * Calculated the maximum rectangles from the inputted A1Notations.
-   *
-   * @param {Object} object GridRange converted from the inputted A1Notations, the numbers of maximum row and column.
-   * @returns {Object} Object including the calculated maximum rectangles.
-   */
-  getMaxAreas_(object) {
-    let { obj, gridRanges, maxRow, maxCol } = object;
-    const areas = gridRanges.map((o) => {
-      const { startRowIndex, startColumnIndex } = o;
-      const cc = [];
-      const rr = [];
-      for (let r = startRowIndex; r < maxRow; r++) {
-        for (let c = startColumnIndex; c < maxCol; c++) {
-          const key = `sr@${r}_er@${r + 1}_sc@${c}_ec@${c + 1}`;
-          if (!obj[key]) {
-            cc.push(c - startColumnIndex);
-            break;
-          } else if (c == maxCol - 1) {
-            cc.push(c - startColumnIndex + 1);
-            break;
-          }
-        }
+    // Next, perform random search until the time limit is reached to find better solutions
+    const startTime = Date.now();
+    const timeLimit = 1000; // Search for 1 second (Adjust based on data size)
+
+    while (Date.now() - startTime < timeLimit) {
+      this.performIteration_(initialCells, true);
+    }
+
+    // 3. Organize and Sort Results
+    // Remove duplicates (compare via JSON string)
+    const uniqueSolutions = Array.from(new Set(this.solutions.map(JSON.stringify))).map(JSON.parse);
+
+    // Sort criteria:
+    // 1. Fewest number of ranges (Ascending)
+    // 2. Largest sum of squared areas (Descending) - prefers larger chunks
+    const sortedSolutions = uniqueSolutions.sort((a, b) => {
+      // Compare by length
+      if (a.length !== b.length) {
+        return a.length - b.length;
       }
-      for (let c = startColumnIndex; c < maxCol; c++) {
-        for (let r = startRowIndex; r < maxRow; r++) {
-          const key = `sr@${r}_er@${r + 1}_sc@${c}_ec@${c + 1}`;
-          if (!obj[key]) {
-            rr.push(r - startRowIndex);
-            break;
-          } else if (r == maxRow - 1) {
-            rr.push(r - startRowIndex + 1);
-            break;
-          }
-        }
-      }
-      const r1 = rr.reduce(
-        (oo, e) => {
-          if (e < oo.temp) {
-            oo.temp = e;
-            oo.v.push(oo.temp);
-          } else {
-            oo.v.push(oo.temp);
-          }
-          return oo;
-        },
-        { temp: rr[0], v: [] }
-      );
-      const c1 = cc.reduce(
-        (oo, e) => {
-          if (e < oo.temp) {
-            oo.temp = e;
-            oo.v.push(oo.temp);
-          } else {
-            oo.v.push(oo.temp);
-          }
-          return oo;
-        },
-        { temp: cc[0], v: [] }
-      );
-      const r0 = r1.v.indexOf(0);
-      const c0 = c1.v.indexOf(0);
-      if (r0 > -1) {
-        r1.v.splice(r0);
-      }
-      if (c0 > -1) {
-        c1.v.splice(c0);
-      }
-      const areas = [];
-      let c1v = c1.v.slice();
-      for (let x = 1; x <= r1.v[0]; x++) {
-        const y = c1v.shift();
-        const key = `sr@${o.startRowIndex + x - 1}_er@${
-          o.startRowIndex + x
-        }_sc@${o.startColumnIndex + y - 1}_ec@${o.startColumnIndex + y}`;
-        obj = Object.fromEntries(Object.entries(obj).filter(([k]) => k != key));
-        areas.push({ r: x, c: y, area: x * y });
-      }
-      const maxArea = Math.max(...areas.map((e) => e.area));
-      const tempMaxAreaObj = areas.filter((e) => e.area == maxArea);
-      if (tempMaxAreaObj.length == 0) {
-        return [
-          {
-            areas: [],
-            maxAreaObj: [],
-            o,
-            removeKeys: [{ remove: [], topLeft: "", bottomRight: "" }],
-          },
-        ];
-      }
-      const maxAreaObj = [tempMaxAreaObj[0]];
-      const removeKeys = maxAreaObj.map((e) => {
-        const temp = [];
-        for (let i = o.startRowIndex; i < o.startRowIndex + e.r; i++) {
-          for (let j = o.startColumnIndex; j < o.startColumnIndex + e.c; j++) {
-            const key = `sr@${i}_er@${i + 1}_sc@${j}_ec@${j + 1}`;
-            temp.push(key);
-          }
-        }
-        return {
-          remove: temp,
-          topLeft: `${columnIndexToLetter(o.startColumnIndex)}${
-            o.startRowIndex + 1
-          }`,
-          bottomRight: `${columnIndexToLetter(o.startColumnIndex + e.c - 1)}${
-            o.startRowIndex + e.r
-          }`,
-        };
-      });
-      return { areas, maxAreaObj, o, removeKeys };
+
+      // If lengths are equal, calculate score based on area size
+      const scoreA = this.calculateScore_(a);
+      const scoreB = this.calculateScore_(b);
+      return scoreB - scoreA;
     });
-    const a = Math.max(
-      ...areas.map(({ maxAreaObj }) =>
-        maxAreaObj && maxAreaObj.length > 0 && maxAreaObj[0]?.area
-          ? maxAreaObj[0].area
-          : -1
-      )
-    );
-    const result = areas.filter(
-      ({ maxAreaObj }) =>
-        maxAreaObj &&
-        maxAreaObj.length > 0 &&
-        maxAreaObj[0]?.area &&
-        maxAreaObj[0]?.area == a
-    );
-    return result;
+
+    return sortedSolutions;
+  }
+
+  /**
+   * Performs a single search iteration.
+   * @param {Set} allCells All cells to be processed.
+   * @param {boolean} isRandom Whether to use random selection.
+   */
+  performIteration_(allCells, isRandom) {
+    let currentCells = new Set(allCells);
+    let ranges = [];
+
+    while (currentCells.size > 0) {
+      // Find all maximal rectangles creatable from current cells
+      let candidates = this.findMaximalRectangles_(currentCells);
+
+      if (candidates.length === 0) break; // Should not happen
+
+      // Sort by area (descending)
+      candidates.sort((a, b) => b.area - a.area);
+
+      let selectedRect;
+      if (!isRandom) {
+        // Greedy method: Always choose the largest one
+        selectedRect = candidates[0];
+      } else {
+        // Random method: Randomly select from the top 3 largest
+        // (If fewer than 3, select from available candidates)
+        const limit = Math.min(candidates.length, 3);
+        const index = Math.floor(Math.random() * limit);
+        selectedRect = candidates[index];
+      }
+
+      // Add selected rectangle to results
+      ranges.push(this.gridRangeToA1_(selectedRect));
+
+      // Remove cells included in the selected rectangle
+      for (let r = selectedRect.startRow; r <= selectedRect.endRow; r++) {
+        for (let c = selectedRect.startCol; c <= selectedRect.endCol; c++) {
+          currentCells.delete(`${r},${c}`);
+        }
+      }
+    }
+
+    // Save the completed solution
+    this.solutions.push(ranges);
+  }
+
+  /**
+   * Calculate score (Sum of areas squared).
+   * Solutions with larger chunks are rated higher.
+   */
+  calculateScore_(a1List) {
+    let score = 0;
+    a1List.forEach(a1 => {
+      const range = this.a1ToGridRange_(a1);
+      const area = (range.endRow - range.startRow + 1) * (range.endCol - range.startCol + 1);
+      score += area * area;
+    });
+    return score;
+  }
+
+  /**
+   * Converts A1Notation string ("C1:C5") to GridRange object (for score calculation).
+   */
+  a1ToGridRange_(a1) {
+    if (a1.includes(':')) {
+      const [start, end] = a1.split(':');
+      const s = this.a1ToGrid_(start);
+      const e = this.a1ToGrid_(end);
+      return { startRow: s.row, startCol: s.col, endRow: e.row, endCol: e.col };
+    } else {
+      const s = this.a1ToGrid_(a1);
+      return { startRow: s.row, startCol: s.col, endRow: s.row, endCol: s.col };
+    }
+  }
+
+  /**
+   * Finds all "Maximal Rectangles" from the remaining cells.
+   */
+  findMaximalRectangles_(cellsSet) {
+    // Convert Set to coordinates array
+    const coords = [];
+    for (const s of cellsSet) {
+      const [r, c] = s.split(',').map(Number);
+      coords.push({ r, c });
+    }
+
+    const results = [];
+    const seenSignatures = new Set();
+
+    // Try every cell as the "Top-Left" of a rectangle
+    for (const { r: r0, c: c0 } of coords) {
+      // 1. Measure max continuous width from this point
+      let maxWidth = 0;
+      while (cellsSet.has(`${r0},${c0 + maxWidth}`)) maxWidth++;
+
+      // 2. For each width from 1 to maxWidth, measure max height
+      for (let w = 1; w <= maxWidth; w++) {
+        let h = 1;
+        let valid = true;
+        while (valid) {
+          // Check next row
+          for (let k = 0; k < w; k++) {
+            if (!cellsSet.has(`${r0 + h},${c0 + k}`)) {
+              valid = false;
+              break;
+            }
+          }
+          if (valid) h++;
+        }
+
+        // Rectangle (r0, c0) Width w, Height h
+        const area = w * h;
+        // Key for duplicate check
+        const signature = `${r0},${c0},${w},${h}`;
+
+        if (!seenSignatures.has(signature)) {
+          seenSignatures.add(signature);
+          results.push({
+            startRow: r0,
+            startCol: c0,
+            endRow: r0 + h - 1,
+            endCol: c0 + w - 1,
+            area: area
+          });
+        }
+      }
+    }
+
+    // Remove small rectangles completely contained within other candidates (Efficiency optimization)
+    return results.filter((r1, i, arr) => {
+      return !arr.some((r2, j) =>
+        i !== j &&
+        r1.startRow >= r2.startRow && r1.endRow <= r2.endRow &&
+        r1.startCol >= r2.startCol && r1.endCol <= r2.endCol
+      );
+    });
+  }
+
+  // --- Helper Methods ---
+
+  getUniqueCells_(a1Notations) {
+    const expanded = this.expandA1Notations_(a1Notations).flat();
+    const cells = new Set();
+    expanded.forEach(a1 => {
+      const { row, col } = this.a1ToGrid_(a1);
+      cells.add(`${row},${col}`);
+    });
+    return cells;
+  }
+
+  expandA1Notations_(a1Notations) {
+    return a1Notations.map(a1 => {
+      if (a1.includes(':')) {
+        const [start, end] = a1.split(':');
+        const s = this.a1ToGrid_(start);
+        const e = this.a1ToGrid_(end);
+        const res = [];
+        for (let r = s.row; r <= e.row; r++) {
+          for (let c = s.col; c <= e.col; c++) {
+            res.push(this.gridToA1_(r, c));
+          }
+        }
+        return res;
+      }
+      return a1;
+    });
+  }
+
+  a1ToGrid_(a1) {
+    const match = a1.match(/([A-Z]+)([0-9]+)/);
+    if (!match) return null;
+    return {
+      col: this.columnLetterToIndex_(match[1]),
+      row: parseInt(match[2], 10)
+    };
+  }
+
+  gridRangeToA1_(range) {
+    if (range.startRow === range.endRow && range.startCol === range.endCol) {
+      return this.gridToA1_(range.startRow, range.startCol);
+    }
+    return `${this.gridToA1_(range.startRow, range.startCol)}:${this.gridToA1_(range.endRow, range.endCol)}`;
+  }
+
+  gridToA1_(row, col) {
+    return `${this.columnIndexToLetter_(col)}${row}`;
+  }
+
+  columnLetterToIndex_(letter) {
+    let column = 0;
+    for (let i = 0; i < letter.length; i++) {
+      column += (letter.charCodeAt(i) - 64) * Math.pow(26, letter.length - i - 1);
+    }
+    return column;
+  }
+
+  columnIndexToLetter_(index) {
+    let temp, letter = '';
+    while (index > 0) {
+      temp = (index - 1) % 26;
+      letter = String.fromCharCode(temp + 65) + letter;
+      index = (index - temp - 1) / 26;
+    }
+    return letter;
   }
 }
 ````
@@ -2758,5 +2796,9 @@ I believe that these methods will help to develop the applications created by Go
 - v1.0.11 (June 14, 2025)
 
   1. The method [getInfFromBlob](#getinffromblob) was added.
+
+- v1.0.12 (December 12, 2025)
+
+  1. Updated the method [consolidateA1Notations](#consolidatea1notations).
 
 [TOP](#top)
